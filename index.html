@@ -1,0 +1,3144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Telecom Sales Tracker</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:#1a1a1a;background:#f5f5f3}
+.app{display:flex;height:100vh}
+.sidebar{width:210px;min-width:210px;background:#fff;border-right:1px solid #e5e5e3;padding:14px 0;display:flex;flex-direction:column;overflow-y:auto}
+.shead{padding:8px 14px 12px;border-bottom:1px solid #e5e5e3;margin-bottom:6px}
+.shead .t{font-size:13px;font-weight:600}.shead .s{font-size:11px;color:#888;margin-top:2px}
+.nsec{font-size:10px;font-weight:600;color:#ccc;text-transform:uppercase;letter-spacing:.08em;padding:12px 14px 3px}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 14px;cursor:pointer;font-size:13px;color:#666;border:none;background:none;width:100%;text-align:left;border-left:2px solid transparent}
+.ni:hover{background:#f5f5f3;color:#1a1a1a}
+.ni.active{background:#EEF4FC;color:#185FA5;font-weight:500;border-left-color:#185FA5}
+.ni i{font-size:15px}
+.lock-icon{font-size:11px;color:#BA7517;margin-left:auto}
+.main{flex:1;overflow-y:auto;padding:20px}
+.view{display:none}.view.active{display:block}
+.ptitle{font-size:17px;font-weight:600;margin-bottom:3px}
+.psub{font-size:12px;color:#888;margin-bottom:16px}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px;margin-bottom:16px}
+.metric{background:#fff;border:1px solid #eee;border-radius:10px;padding:12px}
+.ml{font-size:11px;color:#888;margin-bottom:4px}.mv{font-size:19px;font-weight:600}
+.ms{font-size:11px;color:#aaa;margin-top:2px}
+.blue{color:#185FA5}.green{color:#1D9E75}.amber{color:#BA7517}.red{color:#A32D2D}.purple{color:#534AB7}
+.card{background:#fff;border:1px solid #eee;border-radius:12px;padding:14px;margin-bottom:12px}
+.ctitle{font-size:10px;font-weight:700;color:#bbb;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
+.toolbar{display:flex;gap:7px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.toolbar select,.toolbar input{font-size:12px;padding:5px 8px;border-radius:7px;border:1px solid #ddd;background:#fff;color:#1a1a1a}
+.btn{font-size:12px;padding:6px 12px;border-radius:7px;border:1px solid #ddd;background:#fff;color:#1a1a1a;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.btn:hover{background:#f5f5f3}
+.btn.pri{background:#185FA5;color:#fff;border-color:#185FA5}.btn.pri:hover{background:#0C447C}
+.btn.dan{background:#A32D2D;color:#fff;border-color:#A32D2D}
+.btn.warn{background:#BA7517;color:#fff;border-color:#BA7517}
+.btn.grn{background:#1D9E75;color:#fff;border-color:#1D9E75}
+.btn.sm{padding:3px 8px;font-size:11px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;font-size:11px;font-weight:600;color:#888;padding:0 7px 7px;border-bottom:1px solid #eee;white-space:nowrap}
+td{padding:8px 7px;border-bottom:1px solid #f2f2f2;vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf8}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap}
+.b-pend{background:#FAEEDA;color:#633806}.b-proc{background:#E6F1FB;color:#0C447C}
+.b-comp{background:#EAF3DE;color:#27500A}.b-brea{background:#FCEBEB;color:#791F1F}
+.b-canc{background:#F1EFE8;color:#555}.b-act{background:#EAF3DE;color:#27500A}
+.b-inact{background:#F1EFE8;color:#555}.b-pros{background:#E6F1FB;color:#0C447C}
+.b-staff{background:#EEEDFE;color:#3C3489}.b-free{background:#E6F1FB;color:#0C447C}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:flex-start;justify-content:center;padding-top:24px;overflow-y:auto}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:22px;width:700px;max-width:96vw;margin-bottom:40px}
+.modal-sm{width:420px}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px}
+.frow.three{grid-template-columns:1fr 1fr 1fr}
+.frow.four{grid-template-columns:1fr 1fr 1fr 1fr}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:11px;color:#888;font-weight:500}
+.fg label .req{color:#A32D2D}
+.fg input,.fg select,.fg textarea{font-size:13px;padding:7px 10px;border-radius:7px;border:1px solid #ddd;background:#fff;color:#1a1a1a}
+.fg input:focus,.fg select:focus{outline:none;border-color:#185FA5;box-shadow:0 0 0 3px rgba(24,95,165,.1)}
+.fg input.error{border-color:#A32D2D}
+.fg .hint{font-size:11px;color:#aaa;margin-top:2px}
+.fg .err-msg{font-size:11px;color:#A32D2D;margin-top:2px;display:none}
+.fg .err-msg.show{display:block}
+.factions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;padding-top:12px;border-top:1px solid #f0f0f0}
+.sdiv{font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin:12px 0 8px;padding-bottom:5px;border-bottom:1px solid #f0f0f0}
+/* Customer search */
+.csw{position:relative}
+.csi{width:100%;font-size:13px;padding:7px 10px;border-radius:7px;border:1px solid #ddd;background:#fff;color:#1a1a1a}
+.csi:focus{outline:none;border-color:#185FA5;box-shadow:0 0 0 3px rgba(24,95,165,.1)}
+.cdd{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.12);z-index:999;max-height:220px;overflow-y:auto;display:none}
+.cdd.open{display:block}
+.copt{padding:9px 11px;cursor:pointer;border-bottom:1px solid #f5f5f5;font-size:13px}
+.copt:last-child{border-bottom:none}
+.copt:hover{background:#EEF4FC}
+.copt .cn{font-weight:600}.copt .ctl{font-size:11px;color:#888;margin-top:1px}
+.csel{background:#EEF4FC;border:1px solid #C8DCEF;border-radius:8px;padding:8px 11px;font-size:12px;display:none;margin-top:5px;align-items:center;justify-content:space-between}
+.csel.show{display:flex}
+/* Line items */
+.libox{border:1px solid #eee;border-radius:8px;overflow:hidden;margin-bottom:9px}
+.lihdr{display:grid;grid-template-columns:80px 80px 1fr 70px 50px 75px 80px 110px 28px;gap:5px;padding:6px 9px;background:#f8f8f6;font-size:11px;font-weight:600;color:#888}
+.lirow{display:grid;grid-template-columns:80px 80px 1fr 70px 50px 75px 80px 110px 28px;gap:5px;align-items:center;padding:7px 9px;border-top:1px solid #f2f2f2;font-size:12px}
+.liadd{padding:8px 9px;display:flex;gap:6px;align-items:center;border-top:1px solid #f2f2f2;background:#fafaf8;flex-wrap:wrap}
+.liadd select,.liadd input{font-size:12px;padding:5px 7px;border-radius:6px;border:1px solid #ddd;background:#fff}
+.ototal{display:flex;gap:14px;padding:8px 11px;background:#EEF4FC;border-radius:8px;font-size:12px;margin-bottom:9px;flex-wrap:wrap}
+.ppill{background:#E6F1FB;color:#0C447C;border-radius:7px;padding:2px 6px;font-size:11px;display:inline-block;margin:1px}
+.subpill{background:#EEEDFE;color:#3C3489;border-radius:7px;padding:2px 6px;font-size:11px;display:inline-block;margin:1px}
+/* Progress bars */
+.pb-wrap{margin-bottom:6px}
+.pb-label{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px}
+.pb{height:8px;border-radius:4px;background:#f0f0f0;overflow:hidden}
+.pf{height:100%;border-radius:4px;transition:width .3s}
+.pf.green{background:#1D9E75}.pf.amber{background:#BA7517}.pf.red{background:#A32D2D}.pf.blue{background:#185FA5}
+/* Performance card */
+.perf-card{background:#fff;border:1px solid #eee;border-radius:12px;padding:16px;margin-bottom:10px}
+.perf-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.av{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.tier-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600}
+.tier-0{background:#f0f0f0;color:#888}
+.tier-1{background:#FAEEDA;color:#633806}
+.tier-2{background:#E6F1FB;color:#0C447C}
+.tier-3{background:#EAF3DE;color:#27500A}
+.tier-4{background:#EEEDFE;color:#3C3489}
+/* PIN modal */
+.pin-input{letter-spacing:8px;font-size:22px;text-align:center;font-weight:600;padding:12px}
+.pin-error{color:#A32D2D;font-size:12px;text-align:center;margin-top:6px;min-height:18px}
+/* Charts */
+.cw{position:relative;width:100%;height:200px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.leg{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:#888;margin-bottom:7px}
+.li-dot{display:flex;align-items:center;gap:4px}
+.dot{width:8px;height:8px;border-radius:50%}
+.sla-ok{color:#1D9E75}.sla-warn{color:#BA7517}.sla-bad{color:#A32D2D}
+/* Customer card */
+.cust-card{background:#fff;border:1px solid #eee;border-radius:12px;padding:16px;margin-bottom:10px}
+.cust-avatar{width:42px;height:42px;border-radius:10px;background:#E6F1FB;color:#185FA5;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.expiry-warn{color:#BA7517;font-size:11px;font-weight:500}
+.expiry-expired{color:#A32D2D;font-size:11px;font-weight:500}
+/* Category manager */
+.cat-group{border:1px solid #eee;border-radius:10px;margin-bottom:12px;overflow:hidden}
+.cat-group-header{background:#f8f8f6;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee}
+.subcat-row{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #f5f5f5;font-size:13px}
+.subcat-row:last-child{border-bottom:none}
+.subcat-row:hover{background:#fafaf8}
+.info-box{background:#EEF4FC;border:1px solid #C8DCEF;border-radius:10px;padding:11px 14px;font-size:12px;color:#0C447C;display:flex;align-items:flex-start;gap:8px;margin-bottom:12px}
+.warn-box{background:#FAEEDA;border:1px solid #F0C070;border-radius:10px;padding:11px 14px;font-size:12px;color:#633806;display:flex;align-items:flex-start;gap:8px;margin-bottom:12px}
+.toast{position:fixed;bottom:20px;right:20px;background:#1a1a1a;color:#fff;padding:9px 14px;border-radius:8px;font-size:12px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #ddd;border-top-color:#185FA5;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.stage-btn{font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid #ddd;background:#fff;color:#666;cursor:pointer;white-space:nowrap}
+.stage-btn:hover{background:#EEF4FC;color:#185FA5;border-color:#185FA5}
+.stage-btn.active{background:#185FA5;color:#fff;border-color:#185FA5}
+.stage-btn span{background:rgba(255,255,255,.25);border-radius:8px;padding:0 5px;margin-left:3px;font-size:10px}
+.stage-btn:not(.active) span{background:#f0f0f0;color:#888}
+/* ── MOBILE RESPONSIVE ────────────────────────────────── */
+.hamburger{display:none;position:fixed;top:12px;left:12px;z-index:1000;background:#185FA5;color:#fff;border:none;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:18px}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400}
+.sidebar-overlay.show{display:block}
+
+@media(max-width:768px){
+  /* Hamburger button */
+  .hamburger{display:flex;align-items:center;justify-content:center}
+
+  /* Sidebar hidden by default on mobile */
+  .sidebar{position:fixed;left:-220px;top:0;bottom:0;z-index:500;transition:left .25s ease;box-shadow:4px 0 20px rgba(0,0,0,.15)}
+  .sidebar.open{left:0}
+
+  /* Main takes full width */
+  .main{padding:12px;padding-top:56px}
+
+  /* Metrics grid — 2 columns on mobile */
+  .metrics{grid-template-columns:1fr 1fr}
+
+  /* Two column cards — stack on mobile */
+  .two{grid-template-columns:1fr}
+
+  /* Tables scroll horizontally */
+  .card{overflow-x:auto}
+
+  /* Modal full width */
+  .modal{width:96vw;padding:16px;margin:8px}
+  .modal-sm{width:96vw}
+
+  /* Form rows stack on mobile */
+  .frow{grid-template-columns:1fr}
+  .frow.three{grid-template-columns:1fr}
+  .frow.four{grid-template-columns:1fr 1fr}
+
+  /* Stage filter buttons wrap */
+  #stage-filter-btns{gap:4px}
+  .stage-btn{font-size:10px;padding:3px 7px}
+
+  /* Kanban columns smaller */
+  .pipe-box{min-width:75px;padding:6px 8px}
+  .pipe-box .pc{font-size:16px}
+
+  /* Pipeline widget scroll */
+  .pipeline{overflow-x:auto;padding-bottom:8px}
+
+  /* Line items smaller */
+  .lihdr,.lirow{grid-template-columns:1fr 1fr 1fr 40px 30px 60px 60px 80px 24px;font-size:10px}
+
+  /* Hide less important columns on mobile */
+  .hide-mobile{display:none!important}
+
+  /* Touch friendly buttons */
+  .btn{padding:8px 12px}
+  .btn.sm{padding:5px 9px}
+
+  /* Overlay padding */
+  .overlay{padding-top:8px}
+
+  /* SLA colors readable */
+  .sla-bad,.sla-warn,.sla-ok{font-size:11px}
+
+  /* Login box */
+  .lbox{padding:24px;width:95vw}
+}
+</style>
+</head>
+<body>
+<div id="login-screen" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#185FA5,#0C447C);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:20px;padding:36px;width:360px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="font-size:24px;font-weight:700;color:#185FA5;margin-bottom:4px">📡 Telecom Tracker</div>
+    <div style="font-size:13px;color:#888;margin-bottom:24px">Enter your credentials to continue</div>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+      <label style="font-size:12px;color:#888;font-weight:500">Username</label>
+      <input type="text" id="l-user" placeholder="Enter username" style="font-size:14px;padding:10px 12px;border-radius:8px;border:2px solid #ddd;color:#1a1a1a" onkeydown="if(event.key==='Enter')document.getElementById('l-pass').focus()">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px">
+      <label style="font-size:12px;color:#888;font-weight:500">Password</label>
+      <input type="password" id="l-pass" placeholder="Enter password" style="font-size:14px;padding:10px 12px;border-radius:8px;border:2px solid #ddd;color:#1a1a1a" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button onclick="doLogin()" style="width:100%;padding:12px;border-radius:8px;border:none;background:#185FA5;color:#fff;cursor:pointer;font-size:14px;font-weight:600">Login →</button>
+    <div style="color:#A32D2D;font-size:12px;text-align:center;margin-top:8px;min-height:18px" id="lerr"></div>
+  </div>
+</div>
+<button class="hamburger" onclick="toggleSidebar()" id="hamburger-btn">
+  <i class="ti ti-menu-2"></i>
+</button>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+<div class="app">
+<div class="sidebar">
+  <div class="shead"><div class="t" id="app-name">Telecom Tracker</div><div class="s" id="conn-status">Connecting...</div></div>
+  <span class="nsec">Overview</span>
+  <button class="ni active" onclick="nav('dashboard')" id="nav-dashboard"><i class="ti ti-layout-dashboard"></i>Dashboard</button>
+  <span class="nsec">Operations</span>
+  <button class="ni" onclick="nav('orders')" id="nav-orders"><i class="ti ti-clipboard-list"></i>Orders</button>
+  <button class="ni" onclick="nav('kanban')" id="nav-kanban"><i class="ti ti-layout-columns"></i>Workflow Board</button>
+  <button class="ni" onclick="nav('reports')" id="nav-reports"><i class="ti ti-chart-bar"></i>Reports</button>
+  <button class="ni" onclick="nav('sla')" id="nav-sla"><i class="ti ti-clock"></i>SLA Monitor</button>
+  <span class="nsec">Sales</span>
+  <button class="ni" onclick="nav('customers')" id="nav-customers"><i class="ti ti-building"></i>Customers</button>
+  <button class="ni" onclick="nav('performance')" id="nav-performance"><i class="ti ti-chart-bar"></i>Performance</button>
+  <button class="ni" onclick="nav('revenue')" id="nav-revenue"><i class="ti ti-coin"></i>Revenue</button>
+  <span class="nsec">Setup <i class="ti ti-lock lock-icon" title="Manager PIN required"></i></span>
+  <button class="ni" onclick="navProtected('salespeople')" id="nav-salespeople"><i class="ti ti-users"></i>Salespeople</button>
+  <button class="ni" onclick="navProtected('teams')" id="nav-teams"><i class="ti ti-people"></i>Teams</button>
+  <button class="ni" onclick="navProtected('targets')" id="nav-targets"><i class="ti ti-target"></i>Targets</button>
+  <button class="ni" onclick="navProtected('commrules')" id="nav-commrules"><i class="ti ti-calculator"></i>Commission Rules</button>
+  <button class="ni" onclick="nav('categories')" id="nav-categories"><i class="ti ti-tag"></i>Categories</button>
+  <button class="ni" onclick="nav('products')" id="nav-products"><i class="ti ti-package"></i>Products</button>
+  <div style="margin-top:auto;padding:10px 12px;border-top:1px solid #eee;display:flex;flex-direction:column;gap:6px">
+    <button class="btn" style="width:100%;justify-content:center;font-size:12px" onclick="loadAll()"><i class="ti ti-refresh"></i>Refresh data</button>
+    <button class="btn warn" style="width:100%;justify-content:center;font-size:12px" onclick="openChangePin()"><i class="ti ti-lock"></i>Change PIN</button>
+	<button class="btn" style="width:100%;justify-content:center;font-size:11px;color:#888" onclick="doLogout()"><i class="ti ti-logout"></i>Logout</button>
+  </div>
+</div>
+<div class="main">
+
+<!-- DASHBOARD -->
+<div class="view active" id="view-dashboard">
+  <div class="ptitle">Management Dashboard</div>
+  <div class="psub" id="dash-updated">Loading...</div>
+  <div class="metrics" id="dash-metrics"><div style="padding:30px;color:#aaa"><span class="spin"></span> Loading...</div></div>
+  <div class="two">
+    <div class="card">
+      <div class="ctitle">Monthly revenue vs payout (AED)</div>
+      <div class="leg"><span class="li-dot"><span class="dot" style="background:#185FA5"></span>Revenue</span><span class="li-dot"><span class="dot" style="background:#1D9E75"></span>Net</span><span class="li-dot"><span class="dot" style="background:#E24B4A"></span>Payout</span></div>
+      <div class="cw"><canvas id="dashChart" role="img" aria-label="Monthly revenue bar chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Orders by status</div>
+      <div class="cw" style="height:155px"><canvas id="statusChart" role="img" aria-label="Order status chart"></canvas></div>
+      <div id="status-leg" class="leg" style="margin-top:8px;margin-bottom:0"></div>
+    </div>
+  </div>
+  <div class="two">
+    <div class="card"><div class="ctitle">Top performers — this month</div><div id="top-perf"></div></div>
+    <div class="card"><div class="ctitle">Product mix — this month</div><div id="prod-mix"></div></div>
+  </div>
+</div>
+
+<!-- ORDERS -->
+<div class="view" id="view-orders">
+  <div class="ptitle">Order Management</div>
+  <div class="psub">Multi-product orders linked to customer accounts. Click row to expand.</div>
+  <div class="toolbar">
+  <div id="stage-filter-btns" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px">
+  <button class="stage-btn active" onclick="setStageFilter('',this)">All <span id="sf-count-all"></span></button>
+  <button class="stage-btn" onclick="setStageFilter('Pending',this)">Pending <span id="sf-count-Pending"></span></button>
+  <button class="stage-btn" onclick="setStageFilter('Processing',this)">Processing <span id="sf-count-Processing"></span></button>
+  <button class="stage-btn" onclick="setStageFilter('Submitted',this)">Submitted <span id="sf-count-Submitted"></span></button>
+  <button class="stage-btn" onclick="setStageFilter('Activity Created',this)">Activity Created <span id="sf-count-ActivityCreated"></span></button>
+  <button class="stage-btn" onclick="setStageFilter('WO Created',this)">WO Created <span id="sf-count-WOCreated"></span></button>
+  <button class="stage-btn" onclick="setStageFilter('Biometric Done',this)">Biometric Done <span id="sf-count-BiometricDone"></span></button>
+  <button class="stage-btn" onclick="setStageFilter('Activated',this)">Activated <span id="sf-count-Activated"></span></button>
+  <button class="stage-btn" onclick="setStageFilter('Rejected',this)">Rejected <span id="sf-count-Rejected"></span></button>
+</div>
+<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+  <span style="font-size:11px;color:#888;font-weight:500">Date range:</span>
+  <input type="date" id="filter-date-from" onchange="renderOrders()"
+    style="font-size:12px;padding:4px 8px;border-radius:7px;border:1px solid #ddd;background:#fff;color:#1a1a1a">
+  <span style="font-size:11px;color:#aaa">to</span>
+  <input type="date" id="filter-date-to" onchange="renderOrders()"
+    style="font-size:12px;padding:4px 8px;border-radius:7px;border:1px solid #ddd;background:#fff;color:#1a1a1a">
+  <button class="btn sm" onclick="clearDateFilter()" style="font-size:11px;color:#888">
+    <i class="ti ti-x"></i> Clear dates
+  </button>
+</div>
+    <select id="fsp" onchange="renderOrders()"><option value="">All salespeople</option></select>
+    <select id="fcust" onchange="renderOrders()"><option value="">All customers</option></select>
+    <input type="date" id="fdt" onchange="renderOrders()" style="width:128px">
+    <button class="btn pri" onclick="openOrderModal()"><i class="ti ti-plus"></i>New order</button>
+	<button class="btn grn" onclick="exportOrdersExcel()"><i class="ti ti-file-spreadsheet"></i>Export Excel</button>
+  </div>
+  <div class="card" style="padding:0;overflow-x:auto">
+    <table><thead><tr>
+      <th style="width:24px"></th>
+      <th>Order ID</th><th>Date</th><th>Customer</th><th>TL No.</th>
+      <th>Salesperson</th><th>Products</th><th>Revenue</th><th>Payout</th><th>Status</th><th>SLA</th><th>Actions</th>
+    </tr></thead><tbody id="orders-body"></tbody></table>
+  </div>
+  <div id="orders-foot" style="font-size:11px;color:#aaa;margin-top:-4px"></div>
+</div>
+
+
+<!-- KANBAN BOARD -->
+<div class="view" id="view-kanban">
+  <div class="ptitle">Workflow Board</div>
+  <div class="psub">Active orders grouped by stage — click Advance to move an order forward</div>
+  <div style="display:flex;gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+    <span style="font-size:11px;color:#888;font-weight:500">Date range:</span>
+    <input type="date" id="kanban-date-from" onchange="renderKanban()"
+      style="font-size:12px;padding:4px 8px;border-radius:7px;border:1px solid #ddd;background:#fff">
+    <span style="font-size:11px;color:#aaa">to</span>
+    <input type="date" id="kanban-date-to" onchange="renderKanban()"
+      style="font-size:12px;padding:4px 8px;border-radius:7px;border:1px solid #ddd;background:#fff">
+    <button class="btn sm" onclick="clearKanbanDates()" style="font-size:11px;color:#888">
+      <i class="ti ti-x"></i> Clear
+    </button>
+    <button class="btn sm" onclick="renderKanban()" style="font-size:11px">
+      <i class="ti ti-refresh"></i> Refresh
+    </button>
+  </div>
+  <div id="kanban-board" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:12px;align-items:flex-start"></div>
+</div>
+
+<!-- REPORTS -->
+<div class="view" id="view-reports">
+  <div class="ptitle">Reports</div>
+  <div class="psub">Stage summary, SLA monitor and salesperson performance</div>
+  <div style="display:flex;gap:6px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+    <span style="font-size:11px;color:#888;font-weight:500">Date range:</span>
+    <input type="date" id="report-date-from" onchange="renderReports()"
+      style="font-size:12px;padding:4px 8px;border-radius:7px;border:1px solid #ddd;background:#fff">
+    <span style="font-size:11px;color:#aaa">to</span>
+    <input type="date" id="report-date-to" onchange="renderReports()"
+      style="font-size:12px;padding:4px 8px;border-radius:7px;border:1px solid #ddd;background:#fff">
+    <button class="btn sm" onclick="clearReportDates()" style="font-size:11px;color:#888">
+      <i class="ti ti-x"></i> Clear
+    </button>
+    <button class="btn pri sm" onclick="renderReports()">
+      <i class="ti ti-refresh"></i> Refresh
+    </button>
+  </div>
+
+  <!-- Stage Summary -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ctitle">Stage summary</div>
+    <div id="report-stage-summary"></div>
+  </div>
+
+  <!-- SLA Monitor -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ctitle">SLA breached orders</div>
+    <div id="report-sla"></div>
+  </div>
+
+  <!-- Salesperson Summary -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ctitle">Salesperson summary</div>
+    <div id="report-salesperson"></div>
+  </div>
+
+  <!-- Monthly Trend -->
+  <div class="card">
+    <div class="ctitle">Monthly trend — last 6 months</div>
+    <div style="position:relative;width:100%;height:220px">
+      <canvas id="report-trend-chart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- SLA -->
+<div class="view" id="view-sla">
+  <div class="ptitle">SLA Monitor</div>
+  <div class="psub">SLA = shortest SLA among all products in the order</div>
+  <div class="metrics" id="sla-metrics"></div>
+  <div class="card" style="padding:0;overflow-x:auto">
+    <table><thead><tr><th>Order</th><th>Customer</th><th>Products</th><th>Salesperson</th><th>Date</th><th>SLA hrs</th><th>Elapsed</th><th>Remaining</th><th>Status</th></tr></thead>
+    <tbody id="sla-body"></tbody></table>
+  </div>
+</div>
+
+<!-- CUSTOMERS -->
+<div class="view" id="view-customers">
+  <div class="ptitle">Customer Master</div>
+  <div class="psub">Account directory with order history and revenue summary</div>
+  <div class="toolbar">
+    <input type="text" id="cust-search" placeholder="Search company or TL number..." style="width:250px" oninput="renderCustomers()">
+    <select id="cf-status" onchange="renderCustomers()"><option value="">All statuses</option><option>Active</option><option>Inactive</option><option>Prospect</option></select>
+    <select id="cf-emirate" onchange="renderCustomers()"><option value="">All emirates</option></select>
+    <button class="btn pri" onclick="openCustModal()"><i class="ti ti-plus"></i>Add customer</button>
+  </div>
+  <div id="cust-list"></div>
+</div>
+
+<!-- PERFORMANCE -->
+<div class="view" id="view-performance">
+  <div class="ptitle">Sales Performance</div>
+  <div class="psub">Staff targets, commission tiers and freelancer commissions</div>
+  <div class="toolbar">
+    <select id="perf-month" onchange="renderPerformance()"></select>
+    <select id="perf-type" onchange="renderPerformance()"><option value="">Staff &amp; Freelancers</option><option value="Staff">Staff only</option><option value="Freelancer">Freelancers only</option></select>
+  </div>
+  <div id="perf-staff" class="card" style="margin-bottom:14px">
+    <div class="ctitle"><i class="ti ti-id-badge"></i> Staff performance &amp; targets</div>
+    <div id="staff-cards"></div>
+  </div>
+  <div id="perf-free" class="card">
+    <div class="ctitle"><i class="ti ti-user-check"></i> Freelancer performance</div>
+    <div id="free-cards"></div>
+  </div>
+</div>
+
+<!-- REVENUE -->
+<div class="view" id="view-revenue">
+  <div class="ptitle">Revenue Report</div>
+  <div class="psub">Gross revenue, payouts and net margin</div>
+  <div class="toolbar">
+    <select id="rev-mode" onchange="renderRevenue()"><option value="monthly">Monthly</option><option value="daily">Daily (this month)</option></select>
+    <select id="rev-cat" onchange="onRevCatChange()"><option value="">All categories</option></select>
+    <select id="rev-subcat" onchange="onRevSubcatChange()"><option value="">All subcategories</option></select>
+    <select id="rev-prod" onchange="renderRevenue()"><option value="">All products</option></select>
+    <select id="rev-type" onchange="renderRevenue()"><option value="">All types</option><option value="New">New</option><option value="Existing">Existing</option><option value="MNP">MNP</option></select>
+  </div>
+  <div class="metrics" id="rev-metrics"></div>
+  <div class="card">
+    <div class="ctitle">Revenue breakdown</div>
+    <div class="leg"><span class="li-dot"><span class="dot" style="background:#185FA5"></span>Gross</span><span class="li-dot"><span class="dot" style="background:#E24B4A"></span>Payouts</span><span class="li-dot"><span class="dot" style="background:#1D9E75"></span>Net</span></div>
+    <div class="cw" style="height:220px"><canvas id="revChart" role="img" aria-label="Revenue chart"></canvas></div>
+  </div>
+  <div class="card" style="padding:0;overflow-x:auto">
+    <div style="padding:10px 13px 7px;font-size:10px;font-weight:700;color:#bbb;text-transform:uppercase;letter-spacing:.07em">Revenue by product</div>
+    <table><thead><tr><th>Product</th><th>Category</th><th>Subcategory</th><th>Total units</th><th>New</th><th>Existing</th><th>MNP</th><th>Gross (AED)</th><th>MRC</th><th>Payout</th><th>Net</th><th>Margin</th></tr></thead>
+    <tbody id="rev-prod-body"></tbody></table>
+  </div>
+</div>
+
+<!-- TEAMS -->
+<div class="view" id="view-teams">
+  <div class="ptitle">Teams</div>
+  <div class="psub">Manage teams and assign salespeople. One team leader can manage multiple teams.</div>
+  <div class="toolbar">
+    <button class="btn pri" onclick="openTeamModal()">
+      <i class="ti ti-plus"></i>Add team
+    </button>
+  </div>
+  <div id="teams-list"></div>
+</div>
+<!-- SALESPEOPLE (protected) -->
+<div class="view" id="view-salespeople">
+  <div class="ptitle">Salespeople</div>
+  <div class="psub">Manage staff and freelancers — <span class="badge b-staff">Staff</span> have monthly targets &amp; commission tiers · <span class="badge b-free">Freelancer</span> have fixed payout model</div>
+  <div class="toolbar">
+    <select id="sp-type-filter" onchange="renderSalespeople()"><option value="">All types</option><option value="Staff">Staff</option><option value="Freelancer">Freelancer</option></select>
+    <button class="btn pri" onclick="openSPModal('Staff')"><i class="ti ti-plus"></i>Add staff</button>
+    <button class="btn" onclick="openSPModal('Freelancer')"><i class="ti ti-plus"></i>Add freelancer</button>
+  </div>
+  <div id="sp-list"></div>
+</div>
+
+<!-- TARGETS (protected) -->
+<div class="view" id="view-targets">
+  <div class="ptitle">Monthly Targets</div>
+  <div class="psub">Set MRC and product count targets for staff. Last month's targets are pre-loaded as defaults.</div>
+  <div class="toolbar">
+    <select id="tgt-month-filter" onchange="renderTargets()"></select>
+    <select id="tgt-sp-filter" onchange="renderTargets()"><option value="">All staff</option></select>
+  </div>
+  <div class="card" style="padding:0;overflow-x:auto">
+    <table><thead><tr><th>Staff member</th><th>Month</th><th>MRC target (AED)</th><th>Count target</th><th>Set by</th><th>Actions</th></tr></thead>
+    <tbody id="tgt-body"></tbody></table>
+  </div>
+  <div style="margin-top:12px">
+    <button class="btn grn" onclick="openSetTargetModal()"><i class="ti ti-plus"></i>Set new target</button>
+  </div>
+</div>
+
+<!-- COMMISSION RULES -->
+<div class="view" id="view-commrules">
+  <div class="ptitle">Commission Rules</div>
+  <div class="psub">Define eligibility criteria and commission tiers. Global rule applies to all staff. Individual rules override global for specific staff members.</div>
+  <div class="info-box"><i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0"></i>
+    <div><b>How it works:</b><br>
+    1. <b>Count eligibility</b> — staff must hit the count % threshold to qualify for any commission<br>
+    2. <b>MRC tiers</b> — once eligible, MRC achievement determines the commission % slab<br>
+    3. <b>Commission</b> = MRC achieved × tier %<br>
+    4. <b>Priority</b> — individual rule overrides global rule for that person &amp; month range</div>
+  </div>
+  <div class="toolbar">
+    <button class="btn pri" onclick="openCommRuleModal(null,'ALL')"><i class="ti ti-world"></i>Add / edit global rule</button>
+    <button class="btn" onclick="openCommRuleModal()"><i class="ti ti-user"></i>Add individual rule</button>
+  </div>
+  <div id="commrules-list"></div>
+</div>
+
+<!-- CATEGORIES -->
+<div class="view" id="view-categories">
+  <div class="ptitle">Categories &amp; Subcategories</div>
+  <div class="psub">Changes sync to Google Sheet automatically</div>
+  <div class="info-box"><i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0"></i><span>You can also edit directly in the <b>Categories</b> tab of your Google Sheet. Click <b>Refresh data</b> to sync.</span></div>
+  <div class="toolbar"><button class="btn pri" onclick="openCatModal()"><i class="ti ti-plus"></i>Add subcategory</button></div>
+  <div id="cat-groups"></div>
+</div>
+
+<!-- PRODUCTS -->
+<div class="view" id="view-products">
+  <div class="ptitle">Product Catalog</div>
+  <div class="psub">Fixed revenue, MRC, operator value and SLA per product</div>
+  <div class="toolbar">
+    <select id="prod-cat-filter" onchange="onProdCatFilter()"><option value="">All categories</option></select>
+    <select id="prod-subcat-filter" onchange="renderProducts()"><option value="">All subcategories</option></select>
+    <button class="btn pri" onclick="openProdModal()"><i class="ti ti-plus"></i>Add product</button>
+  </div>
+  <div class="card" style="padding:0;overflow-x:auto">
+    <table><thead><tr><th>ID</th><th>Product name</th><th>Category</th><th>Subcategory</th><th>Revenue</th><th>MRC</th><th>Operator Val.</th><th>Contract</th><th>SLA</th><th>Units sold</th><th>Actions</th></tr></thead>
+    <tbody id="prod-body"></tbody></table>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- PIN VERIFY MODAL -->
+<div class="overlay" id="modal-pin">
+<div class="modal modal-sm">
+  <h3><i class="ti ti-lock" style="color:#BA7517"></i>Manager access required</h3>
+  <p style="font-size:13px;color:#666;margin-bottom:14px">Enter your 6-digit manager PIN to access this section.</p>
+  <div class="fg full">
+    <input class="pin-input" id="pin-input" type="password" maxlength="6" placeholder="••••••"
+      oninput="clearPinError()" onkeydown="if(event.key==='Enter')submitPin()">
+  </div>
+  <div class="pin-error" id="pin-error"></div>
+  <div class="factions">
+    <button class="btn" onclick="closeModal('modal-pin')">Cancel</button>
+    <button class="btn warn" onclick="submitPin()">Verify PIN</button>
+  </div>
+</div>
+</div>
+
+<!-- CHANGE PIN MODAL -->
+<div class="overlay" id="modal-change-pin">
+<div class="modal modal-sm">
+  <h3><i class="ti ti-lock-open" style="color:#185FA5"></i>Change manager PIN</h3>
+  <div class="frow" style="grid-template-columns:1fr">
+    <div class="fg"><label>Current PIN</label><input class="pin-input" id="cp-current" type="password" maxlength="6" placeholder="••••••"></div>
+  </div>
+  <div class="frow" style="grid-template-columns:1fr">
+    <div class="fg"><label>New PIN (6 digits)</label><input class="pin-input" id="cp-new" type="password" maxlength="6" placeholder="••••••"></div>
+  </div>
+  <div class="frow" style="grid-template-columns:1fr">
+    <div class="fg"><label>Confirm new PIN</label><input class="pin-input" id="cp-confirm" type="password" maxlength="6" placeholder="••••••"></div>
+  </div>
+  <div class="pin-error" id="cp-error"></div>
+  <div class="factions">
+    <button class="btn" onclick="closeModal('modal-change-pin')">Cancel</button>
+    <button class="btn pri" onclick="submitChangePin()">Update PIN</button>
+  </div>
+</div>
+</div>
+
+<!-- SALESPERSON MODAL -->
+<div class="overlay" id="modal-sp">
+<div class="modal">
+  <h3 id="sp-title"><i class="ti ti-user" style="color:#185FA5"></i>Add salesperson</h3>
+  <input type="hidden" id="sp-type-hidden">
+  <div class="sdiv" id="sp-basic-title">Basic information</div>
+  <div class="frow">
+    <div class="fg"><label>Full name <span class="req">*</span></label><input id="sp-name" type="text"></div>
+    <div class="fg"><label>Phone</label><input id="sp-phone" type="text" placeholder="+971..."></div>
+  </div>
+  <div class="frow"><div class="fg full"><label>Email</label><input id="sp-email" type="email"></div></div>
+
+  <!-- Staff fields -->
+  <div id="staff-fields">
+    <div class="sdiv">Employment details</div>
+	<div class="frow one">
+     <div class="fg full"> <label>Team</label> <select id="sp-team"> <option value="">No team assigned</option> </select> <span class="hint">Assign this person to a team</span>
+  </div>
+</div>
+    <div class="frow three">
+      <div class="fg"><label>Employee ID</label><input id="sp-empid" type="text" placeholder="EMP-001"></div>
+      <div class="fg"><label>Department</label><input id="sp-dept" type="text" placeholder="Enterprise Sales"></div>
+      <div class="fg"><label>Base salary (AED/month)</label><input id="sp-salary" type="number" placeholder="0"></div>
+    </div>
+    <div class="sdiv">Commission tiers (% of MRC achieved)</div>
+    <div class="warn-box"><i class="ti ti-info-circle" style="font-size:15px;flex-shrink:0"></i><span>Commission applies only when <b>both</b> MRC and Count targets are met (≥70%). The <b>lower</b> of the two achievement percentages determines the tier.</span></div>
+    <div class="frow four">
+      <div class="fg"><label>Tier 1: 70–89% (%)</label><input id="sp-t1" type="number" placeholder="2" step="0.5"></div>
+      <div class="fg"><label>Tier 2: 90–99% (%)</label><input id="sp-t2" type="number" placeholder="3" step="0.5"></div>
+      <div class="fg"><label>Tier 3: 100–119% (%)</label><input id="sp-t3" type="number" placeholder="4" step="0.5"></div>
+      <div class="fg"><label>Tier 4: 120%+ (%)</label><input id="sp-t4" type="number" placeholder="6" step="0.5"></div>
+    </div>
+  </div>
+
+  <!-- Freelancer fields -->
+  <div id="free-fields" style="display:none">
+    <div class="sdiv">Payout details</div>
+	  <div class="frow one">
+        <div class="fg full"> <label>Team</label> <select id="sp-team-free"> <option value="">No team assigned</option> </select> <span class="hint">Assign this person to a team</span>
+    </div>
+  </div>
+    <div class="frow">
+      <div class="fg"><label>Payout model</label>
+        <select id="sp-model">
+          <option value="fixed">Fixed per order (AED)</option>
+          <option value="percent">% of order revenue</option>
+          <option value="per_line">Fixed per line item unit (AED)</option>
+        </select>
+      </div>
+      <div class="fg"><label>Value (AED or %)</label><input id="sp-val" type="number" placeholder="0"></div>
+    </div>
+  </div>
+
+  <div class="factions">
+    <button class="btn" onclick="closeModal('modal-sp')">Cancel</button>
+    <button class="btn pri" id="save-sp-btn" onclick="saveSP()">Save</button>
+  </div>
+</div>
+</div>
+
+<!-- SET TARGET MODAL -->
+<div class="overlay" id="modal-target">
+<div class="modal modal-sm" style="width:480px">
+  <h3><i class="ti ti-target" style="color:#1D9E75"></i>Set monthly target</h3>
+  <div class="frow">
+    <div class="fg"><label>Staff member <span class="req">*</span></label><select id="tgt-sp-sel"></select></div>
+    <div class="fg"><label>Month <span class="req">*</span></label><input id="tgt-month-sel" type="month"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>MRC target (AED) <span class="req">*</span></label><input id="tgt-mrc" type="number" placeholder="10000"></div>
+    <div class="fg"><label>Product count target <span class="req">*</span></label><input id="tgt-count" type="number" placeholder="20"></div>
+  </div>
+  <div id="tgt-prev-info" style="font-size:12px;color:#888;margin-top:6px"></div>
+  <div class="factions">
+    <button class="btn" onclick="closeModal('modal-target')">Cancel</button>
+    <button class="btn pri" onclick="saveTarget()">Save target</button>
+  </div>
+</div>
+</div>
+
+<!-- ORDER MODAL -->
+<div class="overlay" id="modal-order">
+<div class="modal">
+  <h3 id="om-title"><i class="ti ti-clipboard-list" style="color:#185FA5"></i>New order</h3>
+  <div class="sdiv">Customer</div>
+  <div class="fg" style="margin-bottom:9px">
+    <label>Select customer <span class="req">*</span></label>
+    <div class="csw">
+      <input class="csi" id="o-cust-search" type="text" placeholder="Search by company name or TL number..."
+        oninput="onCustSearch()" onfocus="onCustSearch()" autocomplete="off">
+      <div class="cdd" id="o-cust-dd"></div>
+    </div>
+    <div class="csel" id="o-cust-sel">
+      <span id="o-cust-sel-txt"></span>
+      <button onclick="clearCustSel()" style="background:none;border:none;cursor:pointer;color:#888;font-size:16px"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="o-cust-id">
+  </div>
+  <div class="frow">
+    <div class="fg"><label>Salesperson <span class="req">*</span></label><select id="o-sp" onchange="recalcOrder()"></select></div>
+    <div class="fg"><label>Order date</label><input id="o-date" type="date"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>Status</label><select id="o-status"><option>Pending</option><option>Processing</option><option>Completed</option><option>Cancelled</option></select></div>
+    <div class="fg"><label>Notes</label><input id="o-notes" type="text" placeholder="Optional"></div>
+  </div>
+  <div class="sdiv" style="display:flex;align-items:center;justify-content:space-between">
+    <span><i class="ti ti-package" style="font-size:13px;vertical-align:-2px"></i> Product line items</span>
+    <span id="override-lock-wrap">
+      <button class="btn warn" style="font-size:11px;padding:3px 9px" onclick="unlockOverride()" id="override-lock-btn">
+        <i class="ti ti-lock"></i> Unlock override payout
+      </button>
+    </span>
+  </div>
+  <div id="override-unlocked-banner" style="display:none;background:#FAEEDA;border:1px solid #F0C070;border-radius:8px;padding:8px 12px;font-size:12px;color:#633806;margin-bottom:8px">
+    <i class="ti ti-lock-open"></i> <b>Override payout unlocked</b> — you can now enter special payout amounts per line item. Leave blank to use default rate.
+  </div>
+  <div class="libox">
+    <div class="lihdr" style="grid-template-columns:80px 80px 1fr 70px 50px 75px 80px 110px 28px"><span>Category</span><span>Subcategory</span><span>Product</span><span>Type</span><span>Qty</span><span>Unit rev.</span><span>Line total</span><span>Override payout</span><span></span></div>
+    <div id="li-list"></div>
+    <div class="liadd">
+      <select id="li-cat" onchange="onLiCatChange()" style="width:105px"><option value="">Category</option></select>
+      <select id="li-subcat" onchange="onLiSubcatChange()" style="width:110px"><option value="">Subcategory</option></select>
+      <select id="li-prod" style="flex:1;min-width:140px"><option value="">Select product</option></select>
+      <input id="li-qty" type="number" min="1" value="1" style="width:52px">
+      <button class="btn" onclick="addLineItem()"><i class="ti ti-plus"></i>Add</button>
+    </div>
+  </div>
+  <div class="ototal">
+    <span>Items: <b id="ot-items">0</b></span>
+    <span>Revenue: <b id="ot-rev">AED 0</b></span>
+    <span>Payout: <b id="ot-payout">AED 0</b></span>
+    <span class="green">Net: <b id="ot-net">AED 0</b></span>
+  </div>
+  <div class="factions">
+    <button class="btn" onclick="closeModal('modal-order')">Cancel</button>
+    <button class="btn pri" id="save-order-btn" onclick="saveOrder()">Save order</button>
+  </div>
+</div>
+</div>
+
+<!-- CUSTOMER MODAL -->
+<div class="overlay" id="modal-cust">
+<div class="modal">
+  <h3 id="cm-title"><i class="ti ti-building" style="color:#185FA5"></i>Add customer</h3>
+  <div class="sdiv">Company information</div>
+  <div class="frow">
+    <div class="fg"><label>Company name <span class="req">*</span></label><input id="c-name" type="text"></div>
+    <div class="fg">
+      <label>Trade License number <span class="req">*</span></label>
+      <input id="c-tl" type="text" placeholder="e.g. CN-1234567" oninput="clearTLError()">
+      <span class="err-msg" id="tl-error"></span>
+      <span class="hint">Unique — prevents duplicate entries</span>
+    </div>
+  </div>
+  <div class="frow three">
+    <div class="fg"><label>TL expiry date</label><input id="c-tlexp" type="date"></div>
+    <div class="fg"><label>Industry</label>
+      <select id="c-industry"><option value="">Select</option><option>Hospitality</option><option>Retail</option><option>Healthcare</option><option>Construction</option><option>Real Estate</option><option>Logistics</option><option>Manufacturing</option><option>Financial Services</option><option>Education</option><option>Government</option><option>Technology</option><option>Trading</option><option>Oil & Gas</option><option>Other</option></select>
+    </div>
+    <div class="fg"><label>Account status</label>
+      <select id="c-status"><option value="Active">Active</option><option value="Prospect">Prospect</option><option value="Inactive">Inactive</option></select>
+    </div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>Emirate</label>
+      <select id="c-emirate"><option value="">Select</option><option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option><option>Ajman</option><option>Ras Al Khaimah</option><option>Fujairah</option><option>Umm Al Quwain</option></select>
+    </div>
+    <div class="fg"><label>Address</label><input id="c-address" type="text"></div>
+  </div>
+  <div class="sdiv">Primary contact</div>
+  <div class="frow three">
+    <div class="fg"><label>Contact person <span class="req">*</span></label><input id="c-contact" type="text"></div>
+    <div class="fg"><label>Phone / WhatsApp</label><input id="c-phone" type="text" placeholder="+971..."></div>
+    <div class="fg"><label>Email</label><input id="c-email" type="email"></div>
+  </div>
+  <div class="sdiv">Account management</div>
+  <div class="frow">
+    <div class="fg"><label>Account manager</label><input id="c-manager" type="text"></div>
+    <div class="fg"><label>Notes</label><input id="c-notes" type="text"></div>
+  </div>
+  <div class="factions">
+    <button class="btn" onclick="closeModal('modal-cust')">Cancel</button>
+    <button class="btn pri" id="save-cust-btn" onclick="saveCust()">Save customer</button>
+  </div>
+</div>
+</div>
+
+<!-- PRODUCT MODAL -->
+<div class="overlay" id="modal-prod">
+<div class="modal" style="width:520px">
+  <h3 id="pm-title"><i class="ti ti-package" style="color:#185FA5"></i>Add product</h3>
+  <div class="frow"><div class="fg full"><label>Product name <span class="req">*</span></label><input id="p-name" type="text"></div></div>
+  <div class="frow">
+    <div class="fg"><label>Category <span class="req">*</span></label><select id="p-cat" onchange="onProdCatChange()"><option value="">Select</option></select></div>
+    <div class="fg"><label>Subcategory</label><select id="p-subcat"><option value="">Select</option></select></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>Revenue — one-time (AED)</label><input id="p-rev" type="number" placeholder="0"></div>
+    <div class="fg"><label>SLA (hours)</label><input id="p-sla" type="number" value="48"></div>
+  </div>
+  <div class="sdiv">Recurring &amp; contract</div>
+  <div class="frow three">
+    <div class="fg"><label>MRC — Monthly rental (AED)</label><input id="p-mrc" type="number" placeholder="0"></div>
+    <div class="fg"><label>Operator value (AED)</label><input id="p-opval" type="number" placeholder="0"></div>
+    <div class="fg"><label>Contract period (months)</label><input id="p-contract" type="number" placeholder="12"></div>
+  </div>
+  <div class="factions">
+    <button class="btn" onclick="closeModal('modal-prod')">Cancel</button>
+    <button class="btn pri" onclick="saveProd()">Save product</button>
+  </div>
+</div>
+</div>
+
+<!-- PRODUCT TYPE RATES MODAL -->
+<div class="overlay" id="modal-type-rates">
+<div class="modal" style="width:560px">
+  <h3 id="tr-title"><i class="ti ti-currency-dollar" style="color:#1D9E75"></i>Type rates</h3>
+  <div class="info-box"><i class="ti ti-info-circle" style="font-size:15px;flex-shrink:0"></i>
+    <span>Set different revenue and operator value for each connection type. <b>MRC stays the same</b> across all types. Leave a type blank to use the product's default revenue.</span>
+  </div>
+  <input type="hidden" id="tr-prod-id">
+  <div id="tr-product-name" style="font-weight:600;font-size:14px;margin-bottom:14px;color:#185FA5"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px" id="tr-types-grid">
+    <!-- New -->
+    <div style="border:1px solid #C3E0B0;border-radius:10px;padding:12px;background:#f8fdf6">
+      <div style="font-weight:600;font-size:12px;color:#27500A;margin-bottom:8px"><span class="badge" style="background:#EAF3DE;color:#27500A">New</span></div>
+      <div class="fg" style="margin-bottom:8px"><label>Revenue (AED)</label><input id="tr-new-rev" type="number" placeholder="0"></div>
+      <div class="fg"><label>Operator value (AED)</label><input id="tr-new-opval" type="number" placeholder="0"></div>
+    </div>
+    <!-- Existing -->
+    <div style="border:1px solid #C8DCEF;border-radius:10px;padding:12px;background:#f6faff">
+      <div style="font-weight:600;font-size:12px;color:#0C447C;margin-bottom:8px"><span class="badge" style="background:#E6F1FB;color:#0C447C">Existing</span></div>
+      <div class="fg" style="margin-bottom:8px"><label>Revenue (AED)</label><input id="tr-exi-rev" type="number" placeholder="0"></div>
+      <div class="fg"><label>Operator value (AED)</label><input id="tr-exi-opval" type="number" placeholder="0"></div>
+    </div>
+    <!-- MNP -->
+    <div style="border:1px solid #C5C2F0;border-radius:10px;padding:12px;background:#faf9ff">
+      <div style="font-weight:600;font-size:12px;color:#3C3489;margin-bottom:8px"><span class="badge" style="background:#EEEDFE;color:#3C3489">MNP</span></div>
+      <div class="fg" style="margin-bottom:8px"><label>Revenue (AED)</label><input id="tr-mnp-rev" type="number" placeholder="0"></div>
+      <div class="fg"><label>Operator value (AED)</label><input id="tr-mnp-opval" type="number" placeholder="0"></div>
+    </div>
+  </div>
+  <div style="font-size:11px;color:#aaa;margin-top:10px"><i class="ti ti-info-circle"></i> Leave blank to use product default revenue for that type</div>
+  <div class="factions">
+    <button class="btn" onclick="closeModal('modal-type-rates')">Cancel</button>
+    <button class="btn pri" onclick="saveTypeRates()">Save rates</button>
+  </div>
+</div>
+</div>
+
+<!-- COMMISSION RULES MODAL -->
+<div class="overlay" id="modal-commrule">
+<div class="modal" style="width:620px">
+  <h3 id="crm-title"><i class="ti ti-calculator" style="color:#185FA5"></i>Commission rule</h3>
+  <div class="frow">
+    <div class="fg">
+      <label>Applies to <span class="req">*</span></label>
+      <select id="cr-sp">
+        <option value="ALL">🌐 ALL staff (global default)</option>
+      </select>
+      <span class="hint">Global rule applies to everyone unless overridden</span>
+    </div>
+    <div class="fg">
+      <label>Active</label>
+      <select id="cr-active"><option value="YES">Yes — in use</option><option value="NO">No — disabled</option></select>
+    </div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>Applies from (month) <span class="req">*</span></label><input id="cr-from" type="month"><span class="hint">Rule is active from this month</span></div>
+    <div class="fg"><label>Applies until (month)</label><input id="cr-to" type="month"><span class="hint">Leave blank = open-ended (no expiry)</span></div>
+  </div>
+
+  <div class="sdiv">Step 1 — Count eligibility gate</div>
+  <div class="warn-box"><i class="ti ti-info-circle" style="font-size:15px;flex-shrink:0"></i>
+    <span>Staff must achieve at least this % of their product count target to be eligible for any commission. If below this threshold, no commission is paid regardless of MRC.</span>
+  </div>
+  <div class="frow" style="grid-template-columns:1fr 2fr">
+    <div class="fg"><label>Count eligibility threshold (%)</label><input id="cr-count-elig" type="number" placeholder="90" min="0" max="100"></div>
+    <div class="fg" style="justify-content:flex-end;padding-top:22px">
+      <div style="background:#f8f8f6;border-radius:8px;padding:10px 12px;font-size:12px;color:#666">
+        Example: If threshold = <b>90%</b> and count target = 20, staff must close at least <b>18 products</b> to qualify.
+      </div>
+    </div>
+  </div>
+
+  <div class="sdiv">Step 2 — MRC commission tiers (applied when count ≥ threshold)</div>
+  <div class="info-box" style="margin-bottom:10px"><i class="ti ti-info-circle" style="font-size:15px;flex-shrink:0"></i>
+    <span>Commission % is applied to <b>MRC achieved</b>. Higher MRC achievement = higher commission slab.</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:9px;margin-bottom:9px">
+    <div class="fg" style="background:#FAEEDA;border-radius:8px;padding:10px">
+      <label style="color:#633806;font-weight:600">Tier 1</label>
+      <label style="color:#633806;margin-top:4px">MRC achievement from (%)</label>
+      <input id="cr-t1-min" type="number" placeholder="70" style="margin-bottom:6px">
+      <label style="color:#633806">Commission (%)</label>
+      <input id="cr-t1-pct" type="number" placeholder="2" step="0.5">
+    </div>
+    <div class="fg" style="background:#E6F1FB;border-radius:8px;padding:10px">
+      <label style="color:#0C447C;font-weight:600">Tier 2</label>
+      <label style="color:#0C447C;margin-top:4px">MRC achievement from (%)</label>
+      <input id="cr-t2-min" type="number" placeholder="90" style="margin-bottom:6px">
+      <label style="color:#0C447C">Commission (%)</label>
+      <input id="cr-t2-pct" type="number" placeholder="3" step="0.5">
+    </div>
+    <div class="fg" style="background:#EAF3DE;border-radius:8px;padding:10px">
+      <label style="color:#27500A;font-weight:600">Tier 3</label>
+      <label style="color:#27500A;margin-top:4px">MRC achievement from (%)</label>
+      <input id="cr-t3-min" type="number" placeholder="100" style="margin-bottom:6px">
+      <label style="color:#27500A">Commission (%)</label>
+      <input id="cr-t3-pct" type="number" placeholder="4" step="0.5">
+    </div>
+    <div class="fg" style="background:#EEEDFE;border-radius:8px;padding:10px">
+      <label style="color:#3C3489;font-weight:600">Tier 4</label>
+      <label style="color:#3C3489;margin-top:4px">MRC achievement from (%)</label>
+      <input id="cr-t4-min" type="number" placeholder="120" style="margin-bottom:6px">
+      <label style="color:#3C3489">Commission (%)</label>
+      <input id="cr-t4-pct" type="number" placeholder="6" step="0.5">
+    </div>
+  </div>
+  <div class="frow"><div class="fg full"><label>Notes (for admin reference)</label><input id="cr-notes" type="text" placeholder="e.g. Q3 incentive, special arrangement"></div></div>
+  <div class="factions">
+    <button class="btn" onclick="closeModal('modal-commrule')">Cancel</button>
+    <button class="btn pri" onclick="saveCommRule()">Save rule</button>
+  </div>
+</div>
+</div>
+
+<!-- CATEGORY MODAL -->
+<div class="overlay" id="modal-cat">
+<div class="modal" style="width:480px">
+  <h3 id="catm-title"><i class="ti ti-tag" style="color:#185FA5"></i>Add subcategory</h3>
+  <div class="frow">
+    <div class="fg"><label>Existing category</label><select id="cc-sel" onchange="onCatSelChange()"><option value="">Select</option></select></div>
+    <div class="fg"><label>Or type new category</label><input id="cc-new" type="text" placeholder="New category name"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>Subcategory name <span class="req">*</span></label><input id="cc-sub" type="text"></div>
+    <div class="fg"><label>Sort order</label><input id="cc-sort" type="number" value="99"></div>
+  </div>
+  <div class="frow"><div class="fg full"><label>Active</label><select id="cc-active"><option value="YES">Yes</option><option value="NO">No</option></select></div></div>
+  <div class="factions">
+    <button class="btn" onclick="closeModal('modal-cat')">Cancel</button>
+    <button class="btn pri" onclick="saveCat()">Save</button>
+  </div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────
+const API = 'https://script.google.com/macros/s/AKfycbzx05SzgCTjaofNBDByBKXiKi0sOsiUUgD5g5xERjyI_3f6LZzaGxLp8uIO8o4x2tFTKA/exec';
+
+const STAGE_FIELDS = {
+  'Processing':       [],
+  'Submitted':        [{id:'notes',label:'Notes',type:'text',placeholder:'Optional'}],
+  'Activity Created': [
+    {id:'activityNumber',label:'Activity number *',type:'text',placeholder:'e.g. ACT-2025-00123'},
+    {id:'activityDate',  label:'Activity date *',  type:'date'},
+    {id:'notes',         label:'Notes',            type:'text',placeholder:'Optional'}
+  ],
+  'WO Created': [
+    {id:'woNumber', label:'Work Order number *', type:'text', placeholder:'e.g. WO-456789'},
+    {id:'woDate',   label:'WO date *',           type:'date'},
+    {id:'notes',    label:'Notes',               type:'text', placeholder:'Optional'}
+  ],
+  'Biometric Done': [
+    {id:'biometricOrderId', label:'Biometric order ID *', type:'text', placeholder:'e.g. BIO-789'},
+    {id:'biometricDate',    label:'Biometric date *',     type:'date'},
+    {id:'notes',            label:'Notes',                type:'text', placeholder:'Optional'}
+  ],
+  'Activated': [
+    {id:'activationDate', label:'Activation date *', type:'date'},
+    {id:'notes',          label:'Notes',             type:'text', placeholder:'Optional'}
+  ],
+  'Rejected': [
+    {id:'rejectionReason', label:'Rejection reason *', type:'text', placeholder:'Reason for rejection'},
+    {id:'notes',           label:'Notes',              type:'text', placeholder:'Optional'}
+  ]
+};
+
+// ── STATE ──────────────────────────────────────────────────
+let S = {categories:[], customers:[], salespeople:[], teams:[],products:[], productTypeRevenues:[], orders:[], targets:[], commissionRules:[], orderStages:[], settings:{}};
+let managerPin = null;      // cached PIN for session
+let pinCallback = null;     // function to call after PIN verified
+let editOrderId=null, editProdId=null, editCatId=null, editCustId=null, editSPId=null, editTgtId=null;
+let tmpLines=[], expandedOrders=new Set(), overrideUnlocked=false;
+let dashChart=null, statusChart=null, revChart=null;
+let curView='dashboard';
+
+// ── INIT ───────────────────────────────────────────────────
+//document.addEventListener('DOMContentLoaded',()=>{ loadAll(); });
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const ls=document.getElementById('login-screen');
+  ls.style.display='flex';
+  document.getElementById('l-user').focus();
+});
+// ── JSONP ──────────────────────────────────────────────────
+let cbCount=0;
+function jsonpGet(params){
+  return new Promise((resolve,reject)=>{
+    const cbName='__tc_'+(++cbCount);
+    const url=API+'?'+new URLSearchParams({...params,callback:cbName});
+    const script=document.createElement('script');
+    const timer=setTimeout(()=>{cleanup();reject(new Error('Request timed out.'));},25000);
+    window[cbName]=data=>{cleanup();data&&data.error?reject(new Error(data.error)):resolve(data);};
+    script.onerror=()=>{cleanup();reject(new Error('Network error.'));};
+    function cleanup(){clearTimeout(timer);delete window[cbName];script.parentNode&&script.parentNode.removeChild(script);}
+    script.src=url; document.head.appendChild(script);
+  });
+}
+async function jsonpPost(body){
+  const params={action:body.action};
+  if(body.id)   params.id=body.id;
+  if(body.pin)  params.pin=body.pin;
+  if(body.data) params.data=JSON.stringify(body.data);
+  return jsonpGet(params);
+}
+
+async function doLogin(){
+  const username=document.getElementById('l-user').value.trim();
+  const password=document.getElementById('l-pass').value.trim();
+  if(!username||!password){ document.getElementById('lerr').textContent='Please enter username and password.'; return; }
+  document.getElementById('lerr').textContent='';
+  try{
+    const res=await jsonpPost({action:'login',data:{username,password}});
+    if(res.success){
+      document.getElementById('login-screen').style.display='none';
+      await loadAll();
+    } else {
+      document.getElementById('lerr').textContent=res.message||'Incorrect credentials.';
+      document.getElementById('l-pass').value='';
+      document.getElementById('l-pass').focus();
+    }
+  }catch(e){ document.getElementById('lerr').textContent='Login error: '+e.message; }
+}
+
+function doLogout(){
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('l-user').value='';
+  document.getElementById('l-pass').value='';
+  document.getElementById('lerr').textContent='';
+  document.getElementById('l-user').focus();
+}
+
+async function loadAll(){
+  try{
+    const d=await jsonpGet({action:'getAll'});
+	S.teams = d.teams || [];
+    S.categories  = d.categories  ||[];
+    S.customers   = d.customers   ||[];
+    S.salespeople = d.salespeople ||[];
+    S.products    = d.products    ||[];
+    S.orders      = d.orders      ||[];
+    S.targets     = d.targets     ||[];
+    S.commissionRules     = d.commissionRules     ||[];
+	S.orderStages     = d.orderStages     || [];
+    S.productTypeRevenues = d.productTypeRevenues ||[];
+    document.getElementById('conn-status').textContent='Connected';
+    document.getElementById('dash-updated').textContent='Last updated: '+new Date().toLocaleTimeString();
+    if(d.settings&&d.settings.appName) document.getElementById('app-name').textContent=d.settings.appName;
+    populateAllFilters();
+    renderCurrent();
+	if(typeof updateStageFilterCounts==='function') updateStageFilterCounts();
+    toast('✓ Loaded — '+S.orders.length+' orders, '+S.customers.length+' customers, '+S.salespeople.length+' salespeople');
+  }catch(e){
+    document.getElementById('conn-status').textContent='Error';
+    toast('Error: '+e.message);
+  }
+}
+
+// ── PIN SYSTEM ─────────────────────────────────────────────
+function navProtected(view){
+  if(managerPin){ nav(view); return; }
+  pinCallback=()=>nav(view);
+  document.getElementById('pin-input').value='';
+  clearPinError();
+  document.getElementById('modal-pin').classList.add('open');
+  setTimeout(()=>document.getElementById('pin-input').focus(),100);
+}
+
+async function submitPin(){
+  const pin=document.getElementById('pin-input').value.trim();
+  if(pin.length<6){ showPinError('Please enter your 6-digit PIN.'); return; }
+  try{
+    const res=await jsonpGet({action:'verifyPin',pin});
+    if(res.valid){
+      managerPin=pin;
+      closeModal('modal-pin');
+      if(pinCallback){ pinCallback(); pinCallback=null; }
+    } else {
+      showPinError('Incorrect PIN. Please try again.');
+      document.getElementById('pin-input').value='';
+    }
+  }catch(e){ showPinError('Error verifying PIN: '+e.message); }
+}
+
+function showPinError(msg){ document.getElementById('pin-error').textContent=msg; }
+function clearPinError(){   document.getElementById('pin-error').textContent=''; }
+
+function openChangePin(){
+  document.getElementById('cp-current').value='';
+  document.getElementById('cp-new').value='';
+  document.getElementById('cp-confirm').value='';
+  document.getElementById('cp-error').textContent='';
+  document.getElementById('modal-change-pin').classList.add('open');
+}
+
+async function submitChangePin(){
+  const current=document.getElementById('cp-current').value.trim();
+  const nw=document.getElementById('cp-new').value.trim();
+  const confirm=document.getElementById('cp-confirm').value.trim();
+  if(!current||!nw||!confirm){ document.getElementById('cp-error').textContent='All fields are required.'; return; }
+  if(nw.length!==6||!/^\d+$/.test(nw)){ document.getElementById('cp-error').textContent='New PIN must be exactly 6 digits.'; return; }
+  if(nw!==confirm){ document.getElementById('cp-error').textContent='New PINs do not match.'; return; }
+  const verify=await jsonpGet({action:'verifyPin',pin:current});
+  if(!verify.valid){ document.getElementById('cp-error').textContent='Current PIN is incorrect.'; return; }
+  await jsonpPost({action:'updatePin',pin:current,data:{newPin:nw}});
+  managerPin=nw;
+  closeModal('modal-change-pin');
+  toast('PIN updated successfully ✓');
+}
+
+// ── NAVIGATION ────────────────────────────────────────────
+function nav(v){
+  curView=v;
+  document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(e=>e.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.getElementById('nav-'+v).classList.add('active');
+  renderCurrent();
+}
+function renderCurrent(){
+  if(curView==='dashboard')    renderDashboard();
+  if(curView==='orders')       {populateOrderFilters();renderOrders();}
+  if(curView==='sla')          renderSLA();
+  if(curView==='customers')    {populateCustFilters();renderCustomers();}
+  if(curView==='performance')  {populatePerfMonths();renderPerformance();}
+  if(curView==='revenue')      {populateRevFilters();renderRevenue();}
+  if(curView==='salespeople')  renderSalespeople();
+  if(curView==='targets')      {populateTgtFilters();renderTargets();}
+  if(curView==='commrules')    renderCommRules();
+  if(curView==='categories')   renderCategories();
+  if(curView==='products')     {populateProdFilters();renderProducts();}
+  if(curView==='teams')  renderTeams();
+  if(curView==='kanban')   renderKanban();
+  if(curView==='reports')  renderReports();
+}
+
+// ── HELPERS ───────────────────────────────────────────────
+// Get type-specific revenue for a product. Falls back to product default.
+function getTypeRev(pid, type){
+  if(!pid||!type) return null;
+  const ptr = S.productTypeRevenues.find(r=>r.productId===pid&&r.type===type);
+  return ptr ? ptr.revenue : null;
+}
+function getTypeOpVal(pid, type){
+  if(!pid||!type) return null;
+  const ptr = S.productTypeRevenues.find(r=>r.productId===pid&&r.type===type);
+  return ptr !== undefined && ptr !== null ? ptr.opVal : null;
+}
+// Get effective revenue for a line item (type-specific or product default)
+function effectiveRevenue(pid, type){
+  const typeRev = getTypeRev(pid, type);
+  return typeRev !== null ? typeRev : getProd(pid).rev;
+}
+
+function getProd(id){return S.products.find(p=>p.id===id)||{name:'?',rev:0,sla:48,cat:'?',subcat:'?',mrc:0,opVal:0,contract:0};}
+function getSP(id){return S.salespeople.find(s=>s.id===id)||{name:'?',type:'?'};}
+function getCust(id){return S.customers.find(c=>c.id===id)||{name:'?',tlNumber:'?'};}
+function oRev(o){return(o.lines||[]).reduce((a,l)=>a+effectiveRevenue(l.pid,l.productType||'New')*(l.qty||1),0);}
+function oMRC(o){return(o.lines||[]).reduce((a,l)=>a+getProd(l.pid).mrc*(l.qty||1),0);}
+function oMinSLA(o){const s=(o.lines||[]).map(l=>getProd(l.pid).sla).filter(Boolean);return s.length?Math.min(...s):48;}
+
+function calcPayout(sp,lines){
+  if(!sp||!lines||!lines.length)return 0;
+  if(sp.type==='Staff')return 0; // staff payout calculated separately via commission
+  const tot=lines.reduce((a,l)=>a+getProd(l.pid).rev*(l.qty||1),0);
+  if(sp.payoutModel==='fixed')return sp.payoutValue;
+  if(sp.payoutModel==='percent')return Math.round(tot*sp.payoutValue/100);
+  if(sp.payoutModel==='per_line')return sp.payoutValue*lines.reduce((a,l)=>a+(l.qty||1),0);
+  return 0;
+}
+
+function getUniqueCats(){return[...new Set(S.categories.map(c=>c.category).filter(Boolean))].sort();}
+function getSubcats(cat){return S.categories.filter(c=>c.category===cat).map(c=>c.subcat).filter(Boolean);}
+
+function monthOrders(off=0){
+  const now=new Date(),ref=new Date(now.getFullYear(),now.getMonth()+off,1);
+  return S.orders.filter(o=>{const d=new Date(o.date);return d.getFullYear()===ref.getFullYear()&&d.getMonth()===ref.getMonth();});
+}
+
+function slaInfo(o){
+  if(['Completed','Cancelled'].includes(o.status))return null;
+  const sla=oMinSLA(o),elapsed=(Date.now()-new Date(o.date).getTime())/3600000;
+  if(o.status==='SLA Breached')return{elapsed:sla+10,sla,pct:110};
+  return{elapsed:Math.round(elapsed*10)/10,sla,pct:(elapsed/sla)*100};
+}
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function bCls(s){return s==='Pending'?'b-pend':s==='Processing'?'b-proc':s==='Completed'?'b-comp':s==='SLA Breached'?'b-brea':'b-canc';}
+
+function tlExpiryStatus(tlExpiry){
+  if(!tlExpiry)return'';
+  const days=Math.ceil((new Date(tlExpiry)-new Date())/(1000*3600*24));
+  if(days<0)return`<span class="expiry-expired"><i class="ti ti-alert-circle"></i> Expired</span>`;
+  if(days<=30)return`<span class="expiry-warn"><i class="ti ti-clock"></i> ${days}d left</span>`;
+  return`<span style="color:#1D9E75;font-size:11px"><i class="ti ti-check"></i> Valid</span>`;
+}
+
+// Commission calculator (mirrors server logic)
+function calcCommission(sp, mrcAch, countAch, mrcTgt, countTgt){
+  if(!mrcTgt||!countTgt)return{tier:0,pct:0,amount:0,mrcPct:0,countPct:0,achPct:0};
+  const mrcPct=Math.round(mrcAch/mrcTgt*100);
+  const cntPct=Math.round(countAch/countTgt*100);
+  const ach=Math.min(mrcPct,cntPct);
+  let tier=0;
+  if(ach>=120)tier=4;else if(ach>=100)tier=3;else if(ach>=90)tier=2;else if(ach>=70)tier=1;
+  const pcts=[0,sp.tier1,sp.tier2,sp.tier3,sp.tier4];
+  const pct=pcts[tier]||0;
+  const amount=Math.round(mrcAch*pct/100);
+  return{tier,pct,amount,mrcPct,countPct,achPct:ach};
+}
+
+function getMonthKey(date){
+  const d=date?new Date(date):new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+
+function populateAllFilters(){
+  const cats=getUniqueCats();
+  ['rev-cat','prod-cat-filter','p-cat','cc-sel'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const v=el.value;
+    const ph=id==='cc-sel'?'<option value="">Select</option>':'<option value="">All categories</option>';
+    el.innerHTML=ph+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+    if(v)el.value=v;
+  });
+  const emirates=[...new Set(S.customers.map(c=>c.emirate).filter(Boolean))].sort();
+  const ef=document.getElementById('cf-emirate');
+  if(ef){const v=ef.value;ef.innerHTML='<option value="">All emirates</option>'+emirates.map(e=>`<option value="${e}">${e}</option>`).join('');if(v)ef.value=v;}
+}
+
+function populateSubcatSelect(selId,cat,current='',required=false){
+  const sel=document.getElementById(selId);if(!sel)return;
+  const subs=cat?getSubcats(cat):[];
+  const ph=required?'<option value="">Select subcategory</option>':'<option value="">All subcategories</option>';
+  sel.innerHTML=ph+subs.map(s=>`<option value="${s}">${s}</option>`).join('');
+  if(current)sel.value=current;
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────
+function renderDashboard(){
+  const cur=monthOrders(0),prev=monthOrders(-1);
+  const totR=cur.reduce((a,o)=>a+oRev(o),0),totP=cur.reduce((a,o)=>a+o.payout,0);
+  const prevR=prev.reduce((a,o)=>a+oRev(o),0);
+  const delta=prevR?((totR-prevR)/prevR*100).toFixed(1):0;
+  const pend=S.orders.filter(o=>o.status==='Pending').length;
+  const brea=S.orders.filter(o=>o.status==='SLA Breached').length;
+  const activeCust=S.customers.filter(c=>c.status==='Active').length;
+  const expTL=S.customers.filter(c=>{if(!c.tlExpiry)return false;const d=Math.ceil((new Date(c.tlExpiry)-new Date())/(864e5));return d>=0&&d<=30;}).length;
+  document.getElementById('dash-metrics').innerHTML=`
+    <div class="metric"><div class="ml">Monthly revenue</div><div class="mv blue">AED ${totR.toLocaleString()}</div><div class="ms">${delta>=0?'↑':'↓'} ${Math.abs(delta)}% vs last month</div></div>
+    <div class="metric"><div class="ml">Net margin</div><div class="mv green">AED ${(totR-totP).toLocaleString()}</div><div class="ms">${totR?Math.round((totR-totP)/totR*100):0}% margin</div></div>
+    <div class="metric"><div class="ml">Pending orders</div><div class="mv ${pend>3?'amber':'green'}">${pend}</div><div class="ms">${cur.length} this month</div></div>
+    <div class="metric"><div class="ml">SLA breaches</div><div class="mv ${brea?'red':'green'}">${brea}</div><div class="ms">${brea?'action required':'all clear'}</div></div>
+    <div class="metric"><div class="ml">Active customers</div><div class="mv purple">${activeCust}</div><div class="ms">${S.customers.length} total</div></div>
+    <div class="metric"><div class="ml">TL expiring soon</div><div class="mv ${expTL?'amber':'green'}">${expTL}</div><div class="ms">within 30 days</div></div>
+  `;
+  const months=[],rD=[],pD=[],nD=[];
+  for(let i=-5;i<=0;i++){const os=monthOrders(i),d=new Date();d.setMonth(d.getMonth()+i);months.push(d.toLocaleString('default',{month:'short'}));const r=os.reduce((a,o)=>a+oRev(o),0),p=os.reduce((a,o)=>a+o.payout,0);rD.push(r);pD.push(p);nD.push(r-p);}
+  if(dashChart)dashChart.destroy();
+  dashChart=new Chart(document.getElementById('dashChart'),{type:'bar',data:{labels:months,datasets:[
+    {label:'Revenue',data:rD,backgroundColor:'rgba(24,95,165,.85)',borderRadius:3},
+    {label:'Net',data:nD,backgroundColor:'rgba(29,158,117,.85)',borderRadius:3},
+    {label:'Payout',data:pD,backgroundColor:'rgba(226,75,74,.7)',borderRadius:3}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'AED '+v.toLocaleString(),font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}},x:{ticks:{font:{size:11}},grid:{display:false}}}}});
+
+  const sts=['Pending','Processing','Completed','SLA Breached','Cancelled'];
+  const sCts=sts.map(s=>S.orders.filter(o=>o.status===s).length);
+  const sCs=['#BA7517','#185FA5','#1D9E75','#A32D2D','#888780'];
+  if(statusChart)statusChart.destroy();
+  statusChart=new Chart(document.getElementById('statusChart'),{type:'doughnut',data:{labels:sts,datasets:[{data:sCts,backgroundColor:sCs,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'62%'}});
+  document.getElementById('status-leg').innerHTML=sts.map((s,i)=>`<span class="li-dot"><span class="dot" style="background:${sCs[i]}"></span>${s} (${sCts[i]})</span>`).join('');
+
+  const spM={};cur.forEach(o=>{if(!spM[o.salespersonId])spM[o.salespersonId]={rev:0,orders:0};spM[o.salespersonId].rev+=oRev(o);spM[o.salespersonId].orders++;});
+  const spS=Object.entries(spM).sort((a,b)=>b[1].rev-a[1].rev).slice(0,5);const mxR=spS[0]?spS[0][1].rev:1;
+  document.getElementById('top-perf').innerHTML=spS.map(([sid,st])=>{const sp=getSP(sid),pct=Math.round(st.rev/mxR*100);
+    return`<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>${sp.name} <span class="badge ${sp.type==='Staff'?'b-staff':'b-free'}" style="font-size:10px">${sp.type}</span></span><span style="color:#888">${st.orders} orders — AED ${st.rev.toLocaleString()}</span></div><div class="pb"><div class="pf blue" style="width:${pct}%"></div></div></div>`;
+  }).join('')||'<p style="color:#bbb;font-size:12px">No orders this month</p>';
+
+  const pM={};cur.forEach(o=>(o.lines||[]).forEach(l=>{if(!pM[l.pid])pM[l.pid]={qty:0,rev:0};pM[l.pid].qty+=(l.qty||1);pM[l.pid].rev+=getProd(l.pid).rev*(l.qty||1);}));
+  const pS=Object.entries(pM).sort((a,b)=>b[1].rev-a[1].rev);const mxP=pS[0]?pS[0][1].rev:1;
+  document.getElementById('prod-mix').innerHTML=pS.map(([pid,st])=>{const p=getProd(pid),pct=Math.round(st.rev/mxP*100);
+    return`<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>${p.name} ×${st.qty}</span><span style="color:#888">AED ${st.rev.toLocaleString()}</span></div><div class="pb"><div class="pf" style="width:${pct}%;background:#534AB7"></div></div></div>`;
+  }).join('')||'<p style="color:#bbb;font-size:12px">No orders this month</p>';
+}
+
+// ── PERFORMANCE ───────────────────────────────────────────
+function populatePerfMonths(){
+  const sel=document.getElementById('perf-month');
+  const months=[];const now=new Date();
+  for(let i=0;i<12;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push({key:getMonthKey(d),label:d.toLocaleString('default',{month:'long',year:'numeric'})});}
+  sel.innerHTML=months.map((m,i)=>`<option value="${m.key}" ${i===0?'selected':''}>${m.label}</option>`).join('');
+}
+
+function renderPerformance(){
+  const month=document.getElementById('perf-month').value;
+  const typeF=document.getElementById('perf-type').value;
+  const monthOrds=S.orders.filter(o=>o.date&&o.date.slice(0,7)===month&&o.status==='Completed');
+  const staff=S.salespeople.filter(s=>s.type==='Staff'&&(!typeF||typeF==='Staff'));
+  const free=S.salespeople.filter(s=>s.type==='Freelancer'&&(!typeF||typeF==='Freelancer'));
+  const avBg=['#E6F1FB','#E1F5EE','#FAECE7','#FBEAF0','#EEEDFE'];
+  const avTx=['#0C447C','#085041','#712B13','#72243E','#3C3489'];
+
+  // Staff cards
+  document.getElementById('staff-cards').innerHTML=staff.length?staff.map((sp,i)=>{
+    const spOrds=monthOrds.filter(o=>o.salespersonId===sp.id);
+    const mrcAch=spOrds.reduce((a,o)=>a+oMRC(o),0);
+    const countAch=spOrds.reduce((a,o)=>a+(o.lines||[]).reduce((b,l)=>b+(l.qty||1),0),0);
+    const tgt=S.targets.find(t=>t.salespersonId===sp.id&&t.month===month);
+    const mrcTgt=tgt?tgt.mrcTarget:0;
+    const cntTgt=tgt?tgt.countTarget:0;
+    const cm=calcCommission(sp,mrcAch,countAch,mrcTgt,cntTgt);
+    const tierLabels=['No commission','Tier 1 (70–89%)','Tier 2 (90–99%)','Tier 3 (100–119%)','Tier 4 (120%+)'];
+    const init=sp.name.split(' ').map(n=>n[0]).slice(0,2).join('');
+    const totRev=spOrds.reduce((a,o)=>a+oRev(o),0);
+    return`<div class="perf-card">
+      <div class="perf-header">
+        <div class="av" style="background:${avBg[i%5]};color:${avTx[i%5]}">${init}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-weight:600;font-size:13px">${sp.name}</span>
+            <span class="badge b-staff">${sp.employeeId||'Staff'}</span>
+            ${sp.department?`<span style="font-size:11px;color:#888">${sp.department}</span>`:''}
+            <span class="tier-badge tier-${cm.tier}">${tierLabels[cm.tier]}</span>
+          </div>
+          <div style="font-size:11px;color:#888;margin-top:2px">${spOrds.length} closed orders · AED ${totRev.toLocaleString()} revenue</div>
+        </div>
+        ${managerPin?`<div style="text-align:right;flex-shrink:0">
+          <div style="font-size:11px;color:#888">Commission</div>
+          <div style="font-size:16px;font-weight:600;color:${cm.amount?'#1D9E75':'#888'}">${cm.amount?'AED '+cm.amount.toLocaleString():'—'}</div>
+          <div style="font-size:11px;color:#888">${cm.pct?cm.pct+'% of MRC':'No commission'}</div>
+        </div>`:'<div style="font-size:11px;color:#aaa"><i class="ti ti-lock"></i> PIN to view commission</div>'}
+      </div>
+      ${tgt?`
+      <div class="pb-wrap">
+        <div class="pb-label"><span>MRC: AED ${mrcAch.toLocaleString()} / AED ${mrcTgt.toLocaleString()}</span><span class="${cm.mrcPct>=100?'green':cm.mrcPct>=70?'amber':'red'}">${cm.mrcPct}%</span></div>
+        <div class="pb"><div class="pf ${cm.mrcPct>=100?'green':cm.mrcPct>=70?'amber':'red'}" style="width:${Math.min(cm.mrcPct,100)}%"></div></div>
+      </div>
+      <div class="pb-wrap">
+        <div class="pb-label"><span>Count: ${countAch} / ${cntTgt} products</span><span class="${cm.countPct>=100?'green':cm.countPct>=70?'amber':'red'}">${cm.countPct}%</span></div>
+        <div class="pb"><div class="pf ${cm.countPct>=100?'green':cm.countPct>=70?'amber':'red'}" style="width:${Math.min(cm.countPct,100)}%"></div></div>
+      </div>
+      <div style="font-size:11px;color:#888;margin-top:4px">Achievement basis: lower of MRC (${cm.mrcPct}%) &amp; Count (${cm.countPct}%) = <b class="${cm.achPct>=100?'green':cm.achPct>=70?'amber':'red'}">${cm.achPct}%</b></div>`
+      :`<div class="warn-box" style="margin:6px 0 0"><i class="ti ti-alert-circle" style="flex-shrink:0"></i><span>No target set for ${month}. <a href="#" onclick="navProtected('targets');return false">Set target</a> to track performance.</span></div>`}
+    </div>`;
+  }).join(''):'<p style="color:#bbb;font-size:13px;padding:10px 0">No staff members found.</p>';
+
+  // Freelancer cards
+  document.getElementById('free-cards').innerHTML=free.length?free.map((sp,i)=>{
+    const spOrds=monthOrds.filter(o=>o.salespersonId===sp.id);
+    const rev=spOrds.reduce((a,o)=>a+oRev(o),0);
+    const payout=spOrds.reduce((a,o)=>a+o.payout,0);
+    const lines=spOrds.reduce((a,o)=>a+(o.lines||[]).reduce((b,l)=>b+(l.qty||1),0),0);
+    const init=sp.name.split(' ').map(n=>n[0]).slice(0,2).join('');
+    const mLabel=sp.payoutModel==='fixed'?`AED ${sp.payoutValue} flat`:sp.payoutModel==='percent'?`${sp.payoutValue}% of revenue`:`AED ${sp.payoutValue} per unit`;
+    return`<div class="perf-card" style="margin-bottom:10px">
+      <div class="perf-header">
+        <div class="av" style="background:${avBg[i%5]};color:${avTx[i%5]}">${init}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13px">${sp.name} <span class="badge b-free">Freelancer</span></div>
+          <div style="font-size:11px;color:#888;margin-top:2px">${mLabel}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px">
+        <div class="metric"><div class="ml">Orders</div><div class="mv" style="font-size:17px">${spOrds.length}</div></div>
+        <div class="metric"><div class="ml">Line items</div><div class="mv" style="font-size:17px">${lines}</div></div>
+        <div class="metric"><div class="ml">Revenue</div><div class="mv blue" style="font-size:13px">AED ${rev.toLocaleString()}</div></div>
+        <div class="metric"><div class="ml">Commission</div><div class="mv amber" style="font-size:13px">AED ${payout.toLocaleString()}</div></div>
+      </div>
+    </div>`;
+  }).join(''):'<p style="color:#bbb;font-size:13px;padding:10px 0">No freelancers found.</p>';
+}
+
+// ── TARGETS ───────────────────────────────────────────────
+function populateTgtFilters(){
+  const months=[];const now=new Date();
+  for(let i=0;i<12;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push({key:getMonthKey(d),label:d.toLocaleString('default',{month:'long',year:'numeric'})});}
+  const ms=document.getElementById('tgt-month-filter');
+  ms.innerHTML=months.map((m,i)=>`<option value="${m.key}" ${i===0?'selected':''}>${m.label}</option>`).join('');
+  const staff=S.salespeople.filter(s=>s.type==='Staff');
+  document.getElementById('tgt-sp-filter').innerHTML='<option value="">All staff</option>'+staff.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+function renderTargets(){
+  const month=document.getElementById('tgt-month-filter').value;
+  const spf=document.getElementById('tgt-sp-filter').value;
+  let tgts=S.targets.filter(t=>t.month===month);
+  if(spf)tgts=tgts.filter(t=>t.salespersonId===spf);
+  document.getElementById('tgt-body').innerHTML=tgts.length?tgts.map(t=>{
+    const sp=getSP(t.salespersonId);
+    return`<tr>
+      <td style="font-weight:600">${sp.name} <span class="badge b-staff" style="font-size:10px">${sp.employeeId||''}</span></td>
+      <td>${t.month}</td>
+      <td>AED ${Number(t.mrcTarget).toLocaleString()}</td>
+      <td>${t.countTarget} products</td>
+      <td style="color:#888">${t.setBy}</td>
+      <td style="white-space:nowrap">
+        <button class="btn sm" onclick="openEditTargetModal('${t.id}')"><i class="ti ti-edit"></i></button>
+        <button class="btn sm dan" onclick="delTarget('${t.id}')"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px">No targets set for this month. Click "Set new target" below.</td></tr>';
+}
+
+function openSetTargetModal(id=null){
+  editTgtId=id;
+  const t=id?S.targets.find(x=>x.id===id):null;
+  const staff=S.salespeople.filter(s=>s.type==='Staff');
+  document.getElementById('tgt-sp-sel').innerHTML=staff.map(s=>`<option value="${s.id}" ${t&&t.salespersonId===s.id?'selected':''}>${s.name}</option>`).join('');
+  const now=new Date();
+  document.getElementById('tgt-month-sel').value=t?t.month:getMonthKey();
+  if(t){
+    document.getElementById('tgt-mrc').value=t.mrcTarget;
+    document.getElementById('tgt-count').value=t.countTarget;
+  } else {
+    // Pre-fill with last month's targets as default
+    const spId=staff[0]?staff[0].id:'';
+    prefillFromLastMonth(spId);
+  }
+  document.getElementById('tgt-sp-sel').onchange=()=>prefillFromLastMonth(document.getElementById('tgt-sp-sel').value);
+  document.getElementById('modal-target').classList.add('open');
+}
+
+function prefillFromLastMonth(spId){
+  const now=new Date();
+  const lastMonth=getMonthKey(new Date(now.getFullYear(),now.getMonth()-1,1));
+  const prev=S.targets.find(t=>t.salespersonId===spId&&t.month===lastMonth);
+  const info=document.getElementById('tgt-prev-info');
+  if(prev){
+    document.getElementById('tgt-mrc').value=prev.mrcTarget;
+    document.getElementById('tgt-count').value=prev.countTarget;
+    info.textContent=`Pre-filled from last month (${lastMonth}): MRC AED ${Number(prev.mrcTarget).toLocaleString()}, Count ${prev.countTarget}`;
+  } else {
+    document.getElementById('tgt-mrc').value='';
+    document.getElementById('tgt-count').value='';
+    info.textContent='No previous month targets found — enter manually.';
+  }
+}
+
+function openEditTargetModal(id){ openSetTargetModal(id); }
+
+async function saveTarget(){
+  const spId=document.getElementById('tgt-sp-sel').value;
+  const month=document.getElementById('tgt-month-sel').value;
+  const mrc=parseFloat(document.getElementById('tgt-mrc').value)||0;
+  const count=parseInt(document.getElementById('tgt-count').value)||0;
+  if(!spId){alert('Please select a staff member.');return;}
+  if(!month){alert('Please select a month.');return;}
+  if(!mrc&&!count){alert('Please enter at least one target value.');return;}
+  const data={id:editTgtId||null,salespersonId:spId,month,mrcTarget:mrc,countTarget:count,setBy:'Manager'};
+  try{
+    const res=await jsonpPost({action:'saveTarget',pin:managerPin,data});
+    if(!res.success){toast('Error: '+(res.message||'Save failed.'));return;}
+    data.id=data.id||res.id;
+    const idx=S.targets.findIndex(t=>t.id===data.id);
+    if(idx>=0)S.targets[idx]=data;else S.targets.push(data);
+    closeModal('modal-target');renderTargets();renderPerformance();toast('Target saved ✓');
+  }catch(e){toast('Save failed: '+e.message);}
+}
+
+async function delTarget(id){
+  if(!confirm('Delete this target?'))return;
+  await jsonpPost({action:'deleteTarget',pin:managerPin,id});
+  S.targets=S.targets.filter(t=>t.id!==id);renderTargets();toast('Target deleted');
+}
+
+// ── SALESPEOPLE ───────────────────────────────────────────
+function renderSalespeople(){
+  const tf=document.getElementById('sp-type-filter').value;
+  const list=S.salespeople.filter(s=>!tf||s.type===tf);
+  const avBg=['#E6F1FB','#E1F5EE','#FAECE7','#FBEAF0','#EEEDFE'];
+  const avTx=['#0C447C','#085041','#712B13','#72243E','#3C3489'];
+  document.getElementById('sp-list').innerHTML=list.length?list.map((sp,i)=>{
+    const init=sp.name.split(' ').map(n=>n[0]).slice(0,2).join('');
+    const isStaff=sp.type==='Staff';
+    const allOrds=S.orders.filter(o=>o.salespersonId===sp.id);
+    const curOrds=monthOrders(0).filter(o=>o.salespersonId===sp.id&&o.status==='Completed');
+    const curMRC=curOrds.reduce((a,o)=>a+oMRC(o),0);
+    const curCount=curOrds.reduce((a,o)=>a+(o.lines||[]).reduce((b,l)=>b+(l.qty||1),0),0);
+    const tgt=S.targets.find(t=>t.salespersonId===sp.id&&t.month===getMonthKey());
+    return`<div class="perf-card" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div class="av" style="background:${avBg[i%5]};color:${avTx[i%5]}">${init}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+            <span style="font-weight:600;font-size:13px">${sp.name}</span>
+            <span class="badge ${isStaff?'b-staff':'b-free'}">${sp.type}</span>
+            ${isStaff&&sp.employeeId?`<span style="font-size:11px;color:#888">${sp.employeeId}</span>`:''}
+            ${isStaff&&sp.department?`<span style="font-size:11px;color:#888">· ${sp.department}</span>`:''}
+          </div>
+          <div style="font-size:11px;color:#888;margin-top:2px">${sp.phone||''} ${sp.email?'· '+sp.email:''}</div>
+        </div>
+        <div style="display:flex;gap:5px;flex-shrink:0">
+          <button class="btn sm" onclick="openSPModal('${sp.type}','${sp.id}')"><i class="ti ti-edit"></i></button>
+          <button class="btn sm dan" onclick="delSP('${sp.id}')"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+      ${isStaff?`
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:8px">
+        <div class="metric"><div class="ml">Base salary</div><div class="mv" style="font-size:13px">AED ${sp.baseSalary.toLocaleString()}</div></div>
+        <div class="metric"><div class="ml">Total orders</div><div class="mv" style="font-size:17px">${allOrds.length}</div></div>
+        <div class="metric"><div class="ml">This month MRC</div><div class="mv amber" style="font-size:13px">AED ${curMRC.toLocaleString()}</div><div class="ms">target: ${tgt?'AED '+Number(tgt.mrcTarget).toLocaleString():'not set'}</div></div>
+        <div class="metric"><div class="ml">This month count</div><div class="mv purple" style="font-size:17px">${curCount}</div><div class="ms">target: ${tgt?tgt.countTarget:'not set'}</div></div>
+      </div>
+      <div style="font-size:11px;color:#888">Commission tiers: T1 ${sp.tier1}% · T2 ${sp.tier2}% · T3 ${sp.tier3}% · T4 ${sp.tier4}%</div>`
+      :`
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px">
+        <div class="metric"><div class="ml">Total orders</div><div class="mv" style="font-size:17px">${allOrds.length}</div></div>
+        <div class="metric"><div class="ml">This month orders</div><div class="mv" style="font-size:17px">${monthOrders(0).filter(o=>o.salespersonId===sp.id).length}</div></div>
+        <div class="metric"><div class="ml">Payout model</div><div class="mv" style="font-size:13px">${sp.payoutModel==='fixed'?'AED '+sp.payoutValue+' flat':sp.payoutModel==='percent'?sp.payoutValue+'% rev':sp.payoutValue+' per unit'}</div></div>
+      </div>`}
+    </div>`;
+  }).join(''):'<p style="color:#bbb;font-size:13px;padding:20px 0">No salespeople found. Use the buttons above to add staff or freelancers.</p>';
+}
+
+function openSPModal(type, id=null){
+  editSPId=id;
+  const sp=id?S.salespeople.find(s=>s.id===id):null;
+  document.getElementById('sp-type-hidden').value=type;
+  document.getElementById('sp-title').innerHTML=`<i class="ti ti-user" style="color:#185FA5"></i>${id?'Edit':'Add'} ${type.toLowerCase()}`;
+  document.getElementById('sp-name').value=sp?sp.name:'';
+  document.getElementById('sp-phone').value=sp?sp.phone:'';
+  document.getElementById('sp-email').value=sp?sp.email:'';
+  const isStaff=type==='Staff';
+  const teamOptions='<option value="">No team assigned</option>'+
+  (S.teams||[]).filter(t=>t.active).map(t=>`<option value="${t.id}" ${sp&&sp.teamId===t.id?'selected':''}>${t.name} (${t.leader})</option>`
+  ).join('');
+  document.getElementById('sp-team').innerHTML=teamOptions;
+  document.getElementById('sp-team-free').innerHTML=teamOptions;
+  document.getElementById('staff-fields').style.display=isStaff?'block':'none';
+  document.getElementById('free-fields').style.display=isStaff?'none':'block';
+  if(isStaff){
+    document.getElementById('sp-empid').value=sp?sp.employeeId:'';
+    document.getElementById('sp-dept').value=sp?sp.department:'';
+    document.getElementById('sp-salary').value=sp?sp.baseSalary:'';
+    document.getElementById('sp-t1').value=sp?Number(sp.tier1)||0:'';
+    document.getElementById('sp-t2').value=sp?Number(sp.tier2)||0:'';
+    document.getElementById('sp-t3').value=sp?Number(sp.tier3)||0:'';
+    document.getElementById('sp-t4').value=sp?Number(sp.tier4)||0:'';
+  } else {
+    document.getElementById('sp-model').value=sp?sp.payoutModel:'fixed';
+    document.getElementById('sp-val').value=sp?sp.payoutValue:'';
+  }
+  document.getElementById('modal-sp').classList.add('open');
+}
+
+async function saveSP(){
+  const name=document.getElementById('sp-name').value.trim();
+  if(!name){alert('Name is required.');return;}
+  const type=document.getElementById('sp-type-hidden').value;
+  const isStaff=type==='Staff';
+  const data={
+    id:editSPId||null, name, type,
+    phone:document.getElementById('sp-phone').value,
+    email:document.getElementById('sp-email').value,
+	teamId:isStaff?document.getElementById('sp-team').value:document.getElementById('sp-team-free').value,
+    employeeId:isStaff?document.getElementById('sp-empid').value:'',
+    department:isStaff?document.getElementById('sp-dept').value:'',
+    baseSalary:isStaff?parseFloat(document.getElementById('sp-salary').value)||0:0,
+    tier1:isStaff?parseFloat(document.getElementById('sp-t1').value)||0:0,
+    tier2:isStaff?parseFloat(document.getElementById('sp-t2').value)||0:0,
+    tier3:isStaff?parseFloat(document.getElementById('sp-t3').value)||0:0,
+    tier4:isStaff?parseFloat(document.getElementById('sp-t4').value)||0:0,
+    payoutModel:!isStaff?document.getElementById('sp-model').value:'fixed',
+    payoutValue:!isStaff?parseFloat(document.getElementById('sp-val').value)||0:0
+  };
+  try{
+    const res=await jsonpPost({action:'saveSalesperson',pin:managerPin,data});
+    if(!res.success){alert(res.message||'Save failed.');return;}
+    data.id=data.id||res.id;
+    const idx=S.salespeople.findIndex(s=>s.id===editSPId);
+    if(idx>=0)S.salespeople[idx]=data;else S.salespeople.push(data);
+    closeModal('modal-sp');renderSalespeople();toast(type+' saved ✓');
+  }catch(e){toast('Save failed: '+e.message);}
+}
+
+async function delSP(id){
+  const sp=getSP(id);
+  if(!confirm(`Delete "${sp.name}"?`))return;
+  const res=await jsonpPost({action:'deleteSalesperson',pin:managerPin,id});
+  if(!res.success){alert(res.message||'Cannot delete.');return;}
+  S.salespeople=S.salespeople.filter(s=>s.id!==id);renderSalespeople();toast('Deleted');
+}
+
+// ── ORDERS ────────────────────────────────────────────────
+function populateOrderFilters(){
+  document.getElementById('fsp').innerHTML='<option value="">All salespeople</option>'+S.salespeople.map(s=>`<option value="${s.id}">${s.name} (${s.type})</option>`).join('');
+  document.getElementById('fcust').innerHTML='<option value="">All customers</option>'+S.customers.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+function renderOrders(){
+  const spf=document.getElementById('fsp').value;
+  const fc=document.getElementById('fcust').value;
+  let orders=[...S.orders].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(activeStageFilter) orders=orders.filter(o=>o.status===activeStageFilter);
+  const dateFrom = document.getElementById('filter-date-from').value;
+  const dateTo   = document.getElementById('filter-date-to').value;
+  if(dateFrom) orders=orders.filter(o=>o.date>=dateFrom);
+  if(dateTo)   orders=orders.filter(o=>o.date<=dateTo);
+  if(spf)orders=orders.filter(o=>o.salespersonId===spf);
+  if(fc)orders=orders.filter(o=>o.customerId===fc);
+  let html='';
+  orders.forEach(o=>{
+    const cust=getCust(o.customerId),sp=getSP(o.salespersonId),rev=oRev(o);
+    const prods=[...new Set((o.lines||[]).map(l=>getProd(l.pid).name))];
+    const sl=slaInfo(o);
+    let slaTxt='<span style="color:#ddd;font-size:11px">—</span>';
+    if(sl){if(sl.pct>=100)slaTxt=`<span class="sla-bad" style="font-size:11px"><i class="ti ti-alert-circle"></i> Breached</span>`;else if(sl.pct>=75)slaTxt=`<span class="sla-warn" style="font-size:11px">${(sl.sla-sl.elapsed).toFixed(0)}h left</span>`;else slaTxt=`<span class="sla-ok" style="font-size:11px">${(sl.sla-sl.elapsed).toFixed(0)}h left</span>`;}
+    const isExp=expandedOrders.has(o.id);
+    html+=`<tr onclick="toggleExp('${o.id}')" style="cursor:pointer">
+      <td style="text-align:center"><i class="ti ${isExp?'ti-chevron-up':'ti-chevron-down'}" style="font-size:12px;color:#bbb"></i></td>
+      <td style="font-size:11px;color:#aaa;font-weight:600">${o.id}</td>
+      <td>${o.date}</td>
+      <td style="font-weight:600">${cust.name}</td>
+      <td style="font-size:11px;color:#888">${cust.tlNumber}</td>
+      <td>${sp.name} <span class="badge ${sp.type==='Staff'?'b-staff':'b-free'}" style="font-size:10px">${sp.type}</span></td>
+      <td>${prods.slice(0,2).map(n=>`<span class="ppill">${n.length>16?n.slice(0,16)+'…':n}</span>`).join('')}${prods.length>2?`<span class="ppill">+${prods.length-2}</span>`:''}</td>
+      <td style="font-weight:600">AED ${rev.toLocaleString()}</td>
+      <td style="color:#888">AED ${o.payout.toLocaleString()}</td>
+      <td><span class="badge ${bCls(o.status)}">${o.status}</span></td>
+      <td>${slaTxt}</td>
+      <td onclick="event.stopPropagation()" style="white-space:nowrap">
+        <button class="btn sm" onclick="openOrderModal('${o.id}')"><i class="ti ti-edit"></i></button>
+		<button class="btn sm grn" onclick="openAdvanceStage('${o.id}')" title="Advance stage"><i class="ti ti-arrow-right"></i></button>
+        <button class="btn sm" onclick="cycleStatus('${o.id}')"><i class="ti ti-refresh"></i></button>
+        <button class="btn sm dan" onclick="delOrder('${o.id}')"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`;
+    if(isExp){html+=`<tr><td colspan="12" style="padding:0 10px 12px 36px;background:#fafaf8">
+      <div style="font-size:11px;font-weight:700;color:#bbb;margin:8px 0 5px;text-transform:uppercase">Line items</div>
+      <table style="font-size:11px;min-width:600px"><thead><tr>
+        <th style="padding:3px 7px;border-bottom:1px solid #eee">Product</th><th style="padding:3px 7px;border-bottom:1px solid #eee">Type</th>
+        <th style="padding:3px 7px;border-bottom:1px solid #eee">Category</th><th style="padding:3px 7px;border-bottom:1px solid #eee">Subcategory</th>
+        <th style="padding:3px 7px;border-bottom:1px solid #eee">Qty</th><th style="padding:3px 7px;border-bottom:1px solid #eee">Unit rev.</th>
+        <th style="padding:3px 7px;border-bottom:1px solid #eee">MRC</th><th style="padding:3px 7px;border-bottom:1px solid #eee">Contract</th>
+        <th style="padding:3px 7px;border-bottom:1px solid #eee">Line total</th><th style="padding:3px 7px;border-bottom:1px solid #eee">Override payout</th>
+      </tr></thead><tbody>
+      ${(o.lines||[]).map(l=>{const p=getProd(l.pid),q=l.qty||1;return`<tr>
+        <td style="padding:5px 7px;border-bottom:1px solid #f5f5f5;font-weight:500">${p.name}</td>
+        <td style="padding:5px 7px;border-bottom:1px solid #f5f5f5">
+          ${ (()=>{ const t=l.productType||'New'; const bg=t==='New'?'#EAF3DE':t==='MNP'?'#EEEDFE':'#E6F1FB'; const tc=t==='New'?'#27500A':t==='MNP'?'#3C3489':'#0C447C'; return `<span class="badge" style="background:${bg};color:${tc}">${t}</span>`; })() }
+        </td>
+        <td style="padding:5px 7px;border-bottom:1px solid #f5f5f5"><span class="ppill">${p.cat}</span></td>
+        <td style="padding:5px 7px;border-bottom:1px solid #f5f5f5"><span class="subpill">${p.subcat||'—'}</span></td>
+        <td style="padding:5px 7px;border-bottom:1px solid #f5f5f5">${q}</td>
+        <td style="padding:5px 7px;border-bottom:1px solid #f5f5f5">AED ${ effectiveRevenue(l.pid,l.productType||'New').toLocaleString() }</td>
+        <td style="padding:5px 7px;border-bottom:1px solid #f5f5f5;color:#185FA5">${p.mrc?'AED '+p.mrc.toLocaleString():'—'}</td>
+        <td style="padding:5px 7px;border-bottom:1px solid #f5f5f5">${p.contract?p.contract+' mths':'—'}</td>
+        <td style="padding:5px 7px;border-bottom:1px solid #f5f5f5;font-weight:600">AED ${ (effectiveRevenue(l.pid,l.productType||'New')*q).toLocaleString() }</td>
+        <td style="padding:5px 7px;border-bottom:1px solid #f5f5f5">${l.overridePayout!==null&&l.overridePayout!==undefined&&l.overridePayout!==''?`<span class="badge b-pend"><i class="ti ti-lock-open" style="font-size:10px"></i> AED ${Number(l.overridePayout).toLocaleString()} (${l.overrideType||'replace'})</span>`:'—'}</td>
+      </tr>`;}).join('')}
+      </tbody></table>
+      <div style="display:flex;gap:14px;font-size:11px;margin-top:8px;padding-top:6px;border-top:1px solid #eee">
+        <span>Customer: <b>${cust.name}</b> (TL: ${cust.tlNumber})</span>
+        <span>Revenue: <b>AED ${rev.toLocaleString()}</b></span>
+        <span>Payout: <b>AED ${o.payout.toLocaleString()}</b></span>
+        <span class="green">Net: <b>AED ${(rev-o.payout).toLocaleString()}</b></span>
+        ${o.notes?`<span>Notes: <em>${o.notes}</em></span>`:''}
+      </div>
+    </td></tr>`;}
+  });
+  document.getElementById('orders-body').innerHTML=html;
+  document.getElementById('orders-foot').textContent=`Showing ${orders.length} of ${S.orders.length} orders`;
+}
+
+function toggleExp(id){expandedOrders.has(id)?expandedOrders.delete(id):expandedOrders.add(id);renderOrders();}
+
+async function cycleStatus(id){
+  const o=S.orders.find(x=>x.id===id);if(!o)return;
+  const arr=['Pending','Processing','Completed','SLA Breached','Cancelled'];
+  const next=arr[(arr.indexOf(o.status)+1)%arr.length];
+  if(!confirm(`Change status to "${next}"?`))return;
+  o.status=next;await jsonpPost({action:'saveOrder',data:o});renderOrders();toast('Status → '+next);
+}
+
+async function delOrder(id){
+  if(!confirm('Delete this order?'))return;
+  await jsonpPost({action:'deleteOrder',id});
+  S.orders=S.orders.filter(o=>o.id!==id);expandedOrders.delete(id);renderOrders();toast('Order deleted');
+}
+
+// ── SLA ───────────────────────────────────────────────────
+function renderSLA(){
+  const active=S.orders.filter(o=>['Pending','Processing','SLA Breached'].includes(o.status));
+  const brea=active.filter(o=>{const s=slaInfo(o);return s&&s.pct>=100;});
+  const risk=active.filter(o=>{const s=slaInfo(o);return s&&s.pct>=75&&s.pct<100;});
+  document.getElementById('sla-metrics').innerHTML=`
+    <div class="metric"><div class="ml">Active orders</div><div class="mv blue">${active.length}</div></div>
+    <div class="metric"><div class="ml">SLA breached</div><div class="mv ${brea.length?'red':'green'}">${brea.length}</div></div>
+    <div class="metric"><div class="ml">At risk (>75%)</div><div class="mv ${risk.length?'amber':'green'}">${risk.length}</div></div>
+    <div class="metric"><div class="ml">On track</div><div class="mv green">${active.length-brea.length-risk.length}</div></div>
+  `;
+  const sorted=[...active].sort((a,b)=>{const sa=slaInfo(a),sb=slaInfo(b);return(sb?sb.pct:0)-(sa?sa.pct:0);});
+  document.getElementById('sla-body').innerHTML=sorted.map(o=>{
+    const cust=getCust(o.customerId),sp=getSP(o.salespersonId),sl=slaInfo(o);
+    const pct=sl?sl.pct:0,rem=sl?Math.max(0,sl.sla-sl.elapsed):0;
+    const cls=pct>=100?'sla-bad':pct>=75?'sla-warn':'sla-ok';
+    const prods=[...new Set((o.lines||[]).map(l=>getProd(l.pid).name))];
+    return`<tr>
+      <td style="font-size:11px;color:#aaa">${o.id}</td>
+      <td><div style="font-weight:600">${cust.name}</div><div style="font-size:11px;color:#aaa">${cust.tlNumber}</div></td>
+      <td>${prods.slice(0,2).map(n=>`<span class="ppill">${n.length>14?n.slice(0,14)+'…':n}</span>`).join('')}${prods.length>2?`<span class="ppill">+${prods.length-2}</span>`:''}</td>
+      <td>${sp.name}</td><td>${o.date}</td>
+      <td>${sl?sl.sla:'—'}</td><td>${sl?sl.elapsed.toFixed(1):'—'}</td>
+      <td class="${cls}" style="font-size:12px">${pct>=100?'Breached':rem.toFixed(1)+'h'}</td>
+      <td><span class="badge ${bCls(o.status)}">${o.status}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── CUSTOMERS ─────────────────────────────────────────────
+function populateCustFilters(){
+  const emirates=[...new Set(S.customers.map(c=>c.emirate).filter(Boolean))].sort();
+  const ef=document.getElementById('cf-emirate');
+  const v=ef.value;ef.innerHTML='<option value="">All emirates</option>'+emirates.map(e=>`<option value="${e}">${e}</option>`).join('');if(v)ef.value=v;
+}
+
+function renderCustomers(){
+  const search=(document.getElementById('cust-search').value||'').toLowerCase();
+  const sf=document.getElementById('cf-status').value,ef=document.getElementById('cf-emirate').value;
+  let custs=[...S.customers];
+  if(search)custs=custs.filter(c=>c.name.toLowerCase().includes(search)||c.tlNumber.toLowerCase().includes(search));
+  if(sf)custs=custs.filter(c=>c.status===sf);
+  if(ef)custs=custs.filter(c=>c.emirate===ef);
+  if(!custs.length){document.getElementById('cust-list').innerHTML='<div style="padding:30px;text-align:center;color:#bbb;font-size:13px"><i class="ti ti-building-off" style="font-size:32px;display:block;margin-bottom:8px"></i>No customers found.</div>';return;}
+  document.getElementById('cust-list').innerHTML=custs.map(c=>{
+    const cOrds=S.orders.filter(o=>o.customerId===c.id);
+    const closed=cOrds.filter(o=>o.status==='Completed');
+    const totRev=closed.reduce((a,o)=>a+oRev(o),0);
+    const totMRC=cOrds.reduce((a,o)=>a+oMRC(o),0);
+    const active=cOrds.filter(o=>['Pending','Processing'].includes(o.status)).length;
+    const subcatMap={};cOrds.forEach(o=>(o.lines||[]).forEach(l=>{const p=getProd(l.pid);const k=p.subcat||p.cat;if(!subcatMap[k])subcatMap[k]=0;subcatMap[k]+=(l.qty||1);}));
+    const statusCls=c.status==='Active'?'b-act':c.status==='Prospect'?'b-pros':'b-inact';
+    const init=c.name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
+    return`<div class="cust-card">
+      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">
+        <div class="cust-avatar">${init}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-weight:600;font-size:14px">${c.name}</span>
+            <span class="badge ${statusCls}">${c.status}</span>
+            ${c.industry?`<span style="font-size:11px;color:#888">${c.industry}</span>`:''}
+          </div>
+          <div style="font-size:12px;color:#888;margin-top:3px;display:flex;gap:12px;flex-wrap:wrap">
+            <span><i class="ti ti-license" style="font-size:11px"></i> TL: <b>${c.tlNumber}</b> ${tlExpiryStatus(c.tlExpiry)}</span>
+            ${c.emirate?`<span><i class="ti ti-map-pin" style="font-size:11px"></i> ${c.emirate}</span>`:''}
+            ${c.contact?`<span><i class="ti ti-user" style="font-size:11px"></i> ${c.contact}</span>`:''}
+            ${c.phone?`<span><i class="ti ti-phone" style="font-size:11px"></i> ${c.phone}</span>`:''}
+          </div>
+        </div>
+        <div style="display:flex;gap:5px;flex-shrink:0">
+          <button class="btn sm" onclick="openCustModal('${c.id}')"><i class="ti ti-edit"></i></button>
+          <button class="btn sm dan" onclick="delCust('${c.id}')"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:8px">
+        <div class="metric"><div class="ml">Total orders</div><div class="mv" style="font-size:17px">${cOrds.length}</div><div class="ms">${active} active</div></div>
+        <div class="metric"><div class="ml">Closed revenue</div><div class="mv blue" style="font-size:13px">AED ${totRev.toLocaleString()}</div><div class="ms">${closed.length} closed</div></div>
+        <div class="metric"><div class="ml">Total MRC</div><div class="mv amber" style="font-size:13px">AED ${totMRC.toLocaleString()}</div></div>
+        <div class="metric"><div class="ml">TL expiry</div><div class="mv" style="font-size:13px">${c.tlExpiry||'—'}</div>${tlExpiryStatus(c.tlExpiry)?`<div class="ms">${tlExpiryStatus(c.tlExpiry)}</div>`:''}</div>
+      </div>
+      ${Object.keys(subcatMap).length?`<div style="font-size:11px;color:#aaa;margin-bottom:4px">Products:</div><div style="display:flex;flex-wrap:wrap;gap:4px">${Object.entries(subcatMap).map(([k,v])=>`<span class="subpill">${k} ×${v}</span>`).join('')}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openCustModal(id=null){
+  editCustId=id;const c=id?S.customers.find(x=>x.id===id):null;
+  document.getElementById('cm-title').innerHTML=`<i class="ti ti-building" style="color:#185FA5"></i>${id?'Edit customer':'Add customer'}`;
+  document.getElementById('c-name').value=c?c.name:'';document.getElementById('c-tl').value=c?c.tlNumber:'';
+  document.getElementById('c-tlexp').value=c?c.tlExpiry:'';document.getElementById('c-industry').value=c?c.industry:'';
+  document.getElementById('c-status').value=c?c.status:'Active';document.getElementById('c-emirate').value=c?c.emirate:'';
+  document.getElementById('c-address').value=c?c.address:'';document.getElementById('c-contact').value=c?c.contact:'';
+  document.getElementById('c-phone').value=c?c.phone:'';document.getElementById('c-email').value=c?c.email:'';
+  document.getElementById('c-manager').value=c?c.manager:'';document.getElementById('c-notes').value=c?c.notes:'';
+  document.getElementById('tl-error').classList.remove('show');document.getElementById('c-tl').classList.remove('error');
+  document.getElementById('modal-cust').classList.add('open');
+}
+function clearTLError(){document.getElementById('tl-error').classList.remove('show');document.getElementById('c-tl').classList.remove('error');}
+
+async function saveCust(){
+  const name=document.getElementById('c-name').value.trim(),tl=document.getElementById('c-tl').value.trim(),contact=document.getElementById('c-contact').value.trim();
+  if(!name){alert('Company name required.');return;}if(!tl){alert('TL number required.');return;}if(!contact){alert('Contact person required.');return;}
+  const btn=document.getElementById('save-cust-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Saving...';
+  const data={id:editCustId||null,name,tlNumber:tl,tlExpiry:document.getElementById('c-tlexp').value,industry:document.getElementById('c-industry').value,status:document.getElementById('c-status').value,emirate:document.getElementById('c-emirate').value,address:document.getElementById('c-address').value,contact,phone:document.getElementById('c-phone').value,email:document.getElementById('c-email').value,manager:document.getElementById('c-manager').value,notes:document.getElementById('c-notes').value};
+  try{
+    const res=await jsonpPost({action:'saveCustomer',data});
+    if(!res.success){if(res.error==='DUPLICATE_TL'){document.getElementById('tl-error').textContent=res.message;document.getElementById('tl-error').classList.add('show');document.getElementById('c-tl').classList.add('error');}else alert(res.message||'Save failed.');return;}
+    data.id=data.id||res.id;
+    const idx=S.customers.findIndex(c=>c.id===editCustId);if(idx>=0)S.customers[idx]=data;else S.customers.push(data);
+    populateAllFilters();closeModal('modal-cust');renderCustomers();toast('Customer saved ✓');
+  }catch(e){toast('Save failed: '+e.message);}
+  finally{btn.disabled=false;btn.innerHTML='Save customer';}
+}
+
+async function delCust(id){
+  if(!confirm('Delete this customer?'))return;
+  const res=await jsonpPost({action:'deleteCustomer',id});
+  if(!res.success){alert(res.message||'Cannot delete.');return;}
+  S.customers=S.customers.filter(c=>c.id!==id);populateAllFilters();renderCustomers();toast('Customer deleted');
+}
+
+// ── CUSTOMER SEARCH in ORDER MODAL ────────────────────────
+function onCustSearch(){
+  const q=(document.getElementById('o-cust-search').value||'').toLowerCase();
+  const dd=document.getElementById('o-cust-dd');
+  const matches=q?S.customers.filter(c=>c.name.toLowerCase().includes(q)||c.tlNumber.toLowerCase().includes(q)).slice(0,8):S.customers.slice(0,8);
+  if(!matches.length){dd.innerHTML='<div class="copt"><span style="color:#bbb;font-style:italic">No customers found.</span></div>';dd.classList.add('open');return;}
+  dd.innerHTML=matches.map(c=>`<div class="copt" onclick="selectCust('${c.id}')"><div class="cn">${c.name} <span class="badge ${c.status==='Active'?'b-act':'b-inact'}" style="font-size:10px">${c.status}</span></div><div class="ctl">TL: ${c.tlNumber}${c.emirate?' · '+c.emirate:''}${c.contact?' · '+c.contact:''}</div></div>`).join('');
+  dd.classList.add('open');
+}
+
+function selectCust(id){
+  const c=getCust(id);
+  document.getElementById('o-cust-id').value=id;
+  document.getElementById('o-cust-search').value='';
+  document.getElementById('o-cust-dd').classList.remove('open');
+  document.getElementById('o-cust-sel-txt').innerHTML=`<b>${c.name}</b> <span style="font-size:11px;color:#888">TL: ${c.tlNumber}${c.emirate?' · '+c.emirate:''}</span>`;
+  document.getElementById('o-cust-sel').classList.add('show');
+}
+function clearCustSel(){document.getElementById('o-cust-id').value='';document.getElementById('o-cust-search').value='';document.getElementById('o-cust-sel').classList.remove('show');}
+document.addEventListener('click',e=>{if(!e.target.closest('.csw'))document.getElementById('o-cust-dd')?.classList.remove('open');});
+
+// ── REVENUE ───────────────────────────────────────────────
+function populateRevFilters(){
+  const cats=getUniqueCats();document.getElementById('rev-cat').innerHTML='<option value="">All categories</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  populateSubcatSelect('rev-subcat','');populateRevProds();
+}
+function onRevCatChange(){populateSubcatSelect('rev-subcat',document.getElementById('rev-cat').value);populateRevProds();}
+function onRevSubcatChange(){populateRevProds();}
+function populateRevProds(){const cat=document.getElementById('rev-cat').value,sc=document.getElementById('rev-subcat').value;const prods=S.products.filter(p=>(!cat||p.cat===cat)&&(!sc||p.subcat===sc));document.getElementById('rev-prod').innerHTML='<option value="">All products</option>'+prods.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');renderRevenue();}
+function renderRevenue(){
+  const mode=document.getElementById('rev-mode').value,pf=document.getElementById('rev-prod').value,cf=document.getElementById('rev-cat').value,sf=document.getElementById('rev-subcat').value,tf=document.getElementById('rev-type').value;
+  function match(pid,type){const p=getProd(pid);return(!cf||p.cat===cf)&&(!sf||p.subcat===sf)&&(!pf||pid===pf)&&(!tf||type===tf);}
+  function lRev(o){return(o.lines||[]).filter(l=>match(l.pid,l.productType||'New')).reduce((a,l)=>a+effectiveRevenue(l.pid,l.productType||'New')*(l.qty||1),0);}
+  function lPay(o){const fr=lRev(o),tr=oRev(o);return tr?Math.round(o.payout*(fr/tr)):0;}
+  let labels=[],rD=[],pD=[],nD=[];
+  if(mode==='monthly'){for(let i=-5;i<=0;i++){const os=monthOrders(i),d=new Date();d.setMonth(d.getMonth()+i);labels.push(d.toLocaleString('default',{month:'short',year:'2-digit'}));const r=os.reduce((a,o)=>a+lRev(o),0),p=os.reduce((a,o)=>a+lPay(o),0);rD.push(r);pD.push(p);nD.push(r-p);}}
+  else{const now=new Date(),y=now.getFullYear(),m=now.getMonth(),dim=new Date(y,m+1,0).getDate();for(let d=1;d<=dim;d++){const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;const os=S.orders.filter(o=>o.date===ds);labels.push(d);const r=os.reduce((a,o)=>a+lRev(o),0),p=os.reduce((a,o)=>a+lPay(o),0);rD.push(r);pD.push(p);nD.push(r-p);}}
+  const tR=rD.reduce((a,b)=>a+b,0),tP=pD.reduce((a,b)=>a+b,0),tN=tR-tP;
+  document.getElementById('rev-metrics').innerHTML=`
+    <div class="metric"><div class="ml">Gross revenue</div><div class="mv blue">AED ${tR.toLocaleString()}</div></div>
+    <div class="metric"><div class="ml">Total payouts</div><div class="mv amber">AED ${tP.toLocaleString()}</div></div>
+    <div class="metric"><div class="ml">Net margin</div><div class="mv green">AED ${tN.toLocaleString()}</div></div>
+    <div class="metric"><div class="ml">Margin %</div><div class="mv ${tR&&Math.round(tN/tR*100)>=35?'green':'amber'}">${tR?Math.round(tN/tR*100):0}%</div></div>
+  `;
+  if(revChart)revChart.destroy();
+  revChart=new Chart(document.getElementById('revChart'),{type:'bar',data:{labels,datasets:[{label:'Gross',data:rD,backgroundColor:'rgba(24,95,165,.8)',borderRadius:3},{label:'Payouts',data:pD,backgroundColor:'rgba(226,75,74,.75)',borderRadius:3},{type:'line',label:'Net',data:nD,borderColor:'#1D9E75',backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:'#1D9E75',tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'AED '+v.toLocaleString(),font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}},x:{ticks:{font:{size:10},autoSkip:true,maxTicksLimit:12},grid:{display:false}}}}});
+  const pMap={};
+  S.orders.forEach(o=>(o.lines||[]).forEach(l=>{
+    const lt=l.productType||'New';
+    if(!match(l.pid,lt))return;
+    if(!pMap[l.pid])pMap[l.pid]={qty:0,rev:0,pay:0,New:{qty:0,rev:0},Existing:{qty:0,rev:0},MNP:{qty:0,rev:0}};
+    const q=l.qty||1,r=effectiveRevenue(l.pid,lt)*q,tr=oRev(o);
+    pMap[l.pid].qty+=q;pMap[l.pid].rev+=r;
+    pMap[l.pid].pay+=tr?Math.round(o.payout*(r/tr)):0;
+    if(!pMap[l.pid][lt])pMap[l.pid][lt]={qty:0,rev:0};
+    pMap[l.pid][lt].qty+=q;pMap[l.pid][lt].rev+=r;
+  }));
+  document.getElementById('rev-prod-body').innerHTML=S.products.filter(p=>(!cf||p.cat===cf)&&(!sf||p.subcat===sf)&&(!pf||p.id===pf)).map(p=>{
+    const s=pMap[p.id]||{qty:0,rev:0,pay:0,New:{qty:0,rev:0},Existing:{qty:0,rev:0},MNP:{qty:0,rev:0}};
+    const net=s.rev-s.pay,mp=s.rev?Math.round(net/s.rev*100):0;
+    const nw=s['New']||{qty:0,rev:0},ex=s['Existing']||{qty:0,rev:0},mn=s['MNP']||{qty:0,rev:0};
+    return`<tr>
+      <td style="font-weight:600">${p.name}</td>
+      <td><span class="ppill">${p.cat}</span></td>
+      <td><span class="subpill">${p.subcat||'—'}</span></td>
+      <td>${s.qty}</td>
+      <td style="color:#27500A">${nw.qty?`<b>${nw.qty}</b> <span style="font-size:10px">AED ${nw.rev.toLocaleString()}</span>`:'—'}</td>
+      <td style="color:#0C447C">${ex.qty?`<b>${ex.qty}</b> <span style="font-size:10px">AED ${ex.rev.toLocaleString()}</span>`:'—'}</td>
+      <td style="color:#3C3489">${mn.qty?`<b>${mn.qty}</b> <span style="font-size:10px">AED ${mn.rev.toLocaleString()}</span>`:'—'}</td>
+      <td>AED ${s.rev.toLocaleString()}</td>
+      <td style="color:#185FA5">${p.mrc?'AED '+p.mrc.toLocaleString():'—'}</td>
+      <td style="color:#888">AED ${s.pay.toLocaleString()}</td>
+      <td style="color:#1D9E75;font-weight:600">AED ${net.toLocaleString()}</td>
+      <td><span class="badge ${mp>=40?'b-comp':mp>=20?'b-proc':'b-brea'}">${mp}%</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── CATEGORIES ────────────────────────────────────────────
+function renderCategories(){
+  const cats=getUniqueCats();
+  if(!cats.length){document.getElementById('cat-groups').innerHTML='<p style="color:#bbb;font-size:13px">No categories yet.</p>';return;}
+  document.getElementById('cat-groups').innerHTML=cats.map(cat=>{
+    const subs=S.categories.filter(c=>c.category===cat);
+    return`<div class="cat-group"><div class="cat-group-header"><span style="font-size:13px;font-weight:600"><span class="ppill">${cat}</span></span><span style="font-size:12px;color:#888">${subs.length} subcategories · <button class="btn sm" onclick="openCatModal(null,'${cat}')"><i class="ti ti-plus"></i> Add</button></span></div>${subs.map(sc=>`<div class="subcat-row"><span><span class="subpill">${sc.subcat}</span> <span style="font-size:11px;color:#aaa">sort: ${sc.sort}</span></span><span style="display:flex;gap:5px"><button class="btn sm" onclick="openCatModal('${sc.id}')"><i class="ti ti-edit"></i></button><button class="btn sm dan" onclick="delCat('${sc.id}')"><i class="ti ti-trash"></i></button></span></div>`).join('')}</div>`;
+  }).join('');
+}
+
+function openCatModal(id=null,prefillCat=''){
+  editCatId=id;const c=id?S.categories.find(x=>x.id===id):null;
+  document.getElementById('catm-title').innerHTML=`<i class="ti ti-tag" style="color:#185FA5"></i>${id?'Edit subcategory':'Add subcategory'}`;
+  const cats=getUniqueCats();document.getElementById('cc-sel').innerHTML='<option value="">Select</option>'+cats.map(cat=>`<option value="${cat}">${cat}</option>`).join('');
+  document.getElementById('cc-sel').value=c?c.category:(prefillCat||'');document.getElementById('cc-new').value='';
+  document.getElementById('cc-sub').value=c?c.subcat:'';document.getElementById('cc-sort').value=c?c.sort:99;
+  document.getElementById('cc-active').value=c?(c.active?'YES':'NO'):'YES';
+  document.getElementById('modal-cat').classList.add('open');
+}
+function onCatSelChange(){if(document.getElementById('cc-sel').value)document.getElementById('cc-new').value='';}
+async function saveCat(){
+  const selCat=document.getElementById('cc-sel').value.trim(),newCat=document.getElementById('cc-new').value.trim();
+  const cat=newCat||selCat,subcat=document.getElementById('cc-sub').value.trim();
+  if(!cat){alert('Category required.');return;}if(!subcat){alert('Subcategory required.');return;}
+  const data={id:editCatId||null,category:cat,subcat,sort:parseInt(document.getElementById('cc-sort').value)||99,active:document.getElementById('cc-active').value!=='NO'};
+  try{const res=await jsonpPost({action:'saveCategory',data});data.id=data.id||res.id;const idx=S.categories.findIndex(c=>c.id===editCatId);if(idx>=0)S.categories[idx]=data;else S.categories.push(data);populateAllFilters();closeModal('modal-cat');renderCategories();toast('Saved ✓');}catch(e){toast('Failed: '+e.message);}
+}
+async function delCat(id){if(!confirm('Delete?'))return;await jsonpPost({action:'deleteCategory',id});S.categories=S.categories.filter(c=>c.id!==id);populateAllFilters();renderCategories();toast('Deleted');}
+
+// ── PRODUCTS ──────────────────────────────────────────────
+function populateProdFilters(){const cats=getUniqueCats();document.getElementById('prod-cat-filter').innerHTML='<option value="">All categories</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');populateSubcatSelect('prod-subcat-filter','');}
+function onProdCatFilter(){populateSubcatSelect('prod-subcat-filter',document.getElementById('prod-cat-filter').value);renderProducts();}
+function onProdCatChange(){populateSubcatSelect('p-subcat',document.getElementById('p-cat').value,'',true);}
+function renderProducts(){
+  const cf=document.getElementById('prod-cat-filter').value,sf=document.getElementById('prod-subcat-filter').value;
+  const pMap={};S.orders.forEach(o=>(o.lines||[]).forEach(l=>{if(!pMap[l.pid])pMap[l.pid]=0;pMap[l.pid]+=(l.qty||1);}));
+  const prods=S.products.filter(p=>(!cf||p.cat===cf)&&(!sf||p.subcat===sf));
+  document.getElementById('prod-body').innerHTML=prods.map(p=>`<tr>
+    <td style="font-size:10px;color:#aaa;font-weight:500">${p.id}</td>
+    <td style="font-weight:600">${p.name}</td><td><span class="ppill">${p.cat}</span></td><td><span class="subpill">${p.subcat||'—'}</span></td>
+    <td style="font-weight:600">AED ${p.rev.toLocaleString()}</td>
+    <td style="color:#185FA5">${p.mrc?'AED '+p.mrc.toLocaleString():'—'}</td>
+    <td style="color:#1D9E75">${p.opVal?'AED '+p.opVal.toLocaleString():'—'}</td>
+    <td>${p.contract?p.contract+' mths':'—'}</td>
+    <td>${p.sla}h</td><td>${pMap[p.id]||0}</td>
+    <td style="white-space:nowrap"><button class="btn sm" onclick="openProdModal('${p.id}')"><i class="ti ti-edit"></i></button> <button class="btn sm" style="background:#EAF3DE;color:#27500A;border-color:#C3E0B0" onclick="openTypeRatesModal('${p.id}')"><i class="ti ti-currency-dollar"></i> Rates</button> <button class="btn sm dan" onclick="delProd('${p.id}')"><i class="ti ti-trash"></i></button></td>
+  </tr>`).join('')||'<tr><td colspan="11" style="text-align:center;color:#bbb;padding:20px">No products. Click Add product.</td></tr>';
+}
+function openProdModal(id=null){
+  editProdId=id;const p=id?S.products.find(x=>x.id===id):null;
+  document.getElementById('pm-title').innerHTML=`<i class="ti ti-package" style="color:#185FA5"></i>${id?'Edit':'Add'} product`;
+  document.getElementById('p-name').value=p?p.name:'';
+  const cats=getUniqueCats();document.getElementById('p-cat').innerHTML='<option value="">Select</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  if(p)document.getElementById('p-cat').value=p.cat;onProdCatChange();if(p)document.getElementById('p-subcat').value=p.subcat;
+  document.getElementById('p-rev').value=p?p.rev:'';document.getElementById('p-sla').value=p?p.sla:48;
+  document.getElementById('p-mrc').value=p?p.mrc:'';document.getElementById('p-opval').value=p?p.opVal:'';document.getElementById('p-contract').value=p?p.contract:'';
+  document.getElementById('modal-prod').classList.add('open');
+}
+async function saveProd(){
+  const name=document.getElementById('p-name').value.trim();if(!name){alert('Name required.');return;}
+  const cat=document.getElementById('p-cat').value;if(!cat){alert('Category required.');return;}
+  const prod={id:editProdId||null,name,cat,subcat:document.getElementById('p-subcat').value,rev:parseFloat(document.getElementById('p-rev').value)||0,sla:parseInt(document.getElementById('p-sla').value)||48,mrc:parseFloat(document.getElementById('p-mrc').value)||0,opVal:parseFloat(document.getElementById('p-opval').value)||0,contract:parseInt(document.getElementById('p-contract').value)||0};
+  try{const res=await jsonpPost({action:'saveProduct',data:prod});prod.id=prod.id||res.id;const idx=S.products.findIndex(p=>p.id===editProdId);if(idx>=0)S.products[idx]=prod;else S.products.push(prod);closeModal('modal-prod');renderProducts();toast('Product saved ✓');}catch(e){toast('Failed: '+e.message);}
+}
+async function delProd(id){if(!confirm('Delete?'))return;await jsonpPost({action:'deleteProduct',id});S.products=S.products.filter(p=>p.id!==id);renderProducts();toast('Deleted');}
+
+// ── ORDER MODAL ───────────────────────────────────────────
+function openOrderModal(id=null){
+  editOrderId=id;tmpLines=[];
+  const o=id?S.orders.find(x=>x.id===id):null;
+  overrideUnlocked=false;
+  document.getElementById('override-lock-btn').innerHTML='<i class="ti ti-lock"></i> Unlock override payout';
+  document.getElementById('override-lock-btn').className='btn warn';
+  document.getElementById('override-unlocked-banner').style.display='none';
+  document.getElementById('om-title').innerHTML=`<i class="ti ti-clipboard-list" style="color:#185FA5"></i>${id?'Edit order':'New order'}`;
+  document.getElementById('o-date').value=o?o.date:new Date().toISOString().slice(0,10);
+  document.getElementById('o-status').value=o?o.status:'Pending';
+  document.getElementById('o-notes').value=o?o.notes:'';
+  document.getElementById('o-sp').innerHTML=S.salespeople.map(s=>`<option value="${s.id}" ${o&&o.salespersonId===s.id?'selected':''}>${s.name} (${s.type})</option>`).join('');
+  if(o&&o.customerId)selectCust(o.customerId);else clearCustSel();
+  const cats=getUniqueCats();
+  document.getElementById('li-cat').innerHTML='<option value="">Category</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  populateSubcatSelect('li-subcat','');populateLiProds();
+  if(o)tmpLines=(o.lines||[]).map(l=>({
+    pid:          l.pid,
+    qty:          l.qty,
+    productType:  l.productType||'New',
+    overridePayout: l.overridePayout!==undefined?l.overridePayout:null,
+    overrideType:   l.overrideType||'replace',
+    overrideNote:   l.overrideNote||''
+  }));
+  renderLI();document.getElementById('modal-order').classList.add('open');
+}
+function onLiCatChange(){populateSubcatSelect('li-subcat',document.getElementById('li-cat').value);populateLiProds();}
+function onLiSubcatChange(){populateLiProds();}
+function populateLiProds(){const cat=document.getElementById('li-cat').value,sc=document.getElementById('li-subcat').value;const prods=S.products.filter(p=>(!cat||p.cat===cat)&&(!sc||p.subcat===sc));document.getElementById('li-prod').innerHTML='<option value="">Select product</option>'+prods.map(p=>`<option value="${p.id}">${p.name} — AED ${p.rev.toLocaleString()} (SLA ${p.sla}h)</option>`).join('');}
+function renderLI(){
+  const list=document.getElementById('li-list');
+  if(!tmpLines.length){
+    list.innerHTML='<div style="padding:12px;text-align:center;font-size:12px;color:#bbb">No products added. Select Category → Subcategory → Product below.</div>';
+    recalcOrder();return;
+  }
+  list.innerHTML=tmpLines.map((l,i)=>{
+    const p=getProd(l.pid),q=l.qty||1;
+    const lineTotal=p.rev*q;
+    // Override display
+    const hasOverride = l.overridePayout!==null && l.overridePayout!==undefined && l.overridePayout!=='';
+    const overrideVal  = hasOverride ? Number(l.overridePayout) : '';
+    const overrideType = l.overrideType || 'replace';
+    // Override cell — shown if unlocked
+    let overrideCell='<span style="color:#ddd;font-size:11px">—</span>';
+    if(overrideUnlocked){
+      overrideCell=`<div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;gap:3px;align-items:center">
+          <input type="number" min="0" placeholder="AED" value="${overrideVal}"
+            onchange="updOverride(${i},'payout',this.value)"
+            style="width:65px;font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid ${hasOverride?'#BA7517':'#ddd'};${hasOverride?'background:#FAEEDA;':''}">
+          <select onchange="updOverride(${i},'type',this.value)" style="font-size:10px;padding:2px 3px;border-radius:5px;border:1px solid #ddd;background:#fff">
+            <option value="replace" ${overrideType==='replace'?'selected':''}>Replace</option>
+            <option value="add"     ${overrideType==='add'?'selected':''}>Add</option>
+          </select>
+        </div>
+        ${hasOverride?`<span style="font-size:10px;color:#BA7517">${overrideType==='replace'?'Replaces':'Adds to'} default</span>`:''}
+      </div>`;
+    } else if(hasOverride){
+      overrideCell=`<span class="badge b-pend" style="font-size:10px"><i class="ti ti-lock-open"></i> AED ${Number(overrideVal).toLocaleString()} (${overrideType})</span>`;
+    }
+    // Type-specific revenue
+    const pType   = l.productType||'New';
+    const effRev  = effectiveRevenue(l.pid, pType);
+    const typedLT = effRev*q;
+    const hasTypePtrs = S.productTypeRevenues.some(r=>r.productId===l.pid);
+    const typeColor   = pType==='New'?'#27500A':pType==='MNP'?'#3C3489':'#0C447C';
+    const typeBg      = pType==='New'?'#EAF3DE':pType==='MNP'?'#EEEDFE':'#E6F1FB';
+    return`<div class="lirow">
+      <span class="ppill" style="font-size:11px">${p.cat}</span>
+      <span class="subpill" style="font-size:11px">${p.subcat||'—'}</span>
+      <span style="font-size:12px;font-weight:500">${p.name}${hasTypePtrs&&effRev!==p.rev?` <span style="font-size:10px;color:#888">(${pType})</span>`:''}
+      </span>
+      <select onchange="updType(${i},this.value)" style="font-size:11px;padding:3px 4px;border-radius:5px;border:1px solid #ddd;background:${typeBg};color:${typeColor};font-weight:600">
+        <option value="New"      ${pType==='New'?'selected':''}>New</option>
+        <option value="Existing" ${pType==='Existing'?'selected':''}>Exist.</option>
+        <option value="MNP"      ${pType==='MNP'?'selected':''}>MNP</option>
+      </select>
+      <input type="number" min="1" value="${q}" onchange="updQty(${i},this.value)"
+        style="width:45px;font-size:12px;padding:3px 4px;border-radius:5px;border:1px solid #ddd">
+      <span style="font-size:11px">AED ${effRev.toLocaleString()}</span>
+      <span style="font-weight:600;font-size:11px">AED ${typedLT.toLocaleString()}</span>
+      ${overrideCell}
+      <button onclick="rmLI(${i})" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:16px"><i class="ti ti-x"></i></button>
+    </div>`;
+  }).join('');
+  recalcOrder();
+}
+function updQty(i,v){tmpLines[i].qty=Math.max(1,parseInt(v)||1);renderLI();}
+function updType(i,val){
+  tmpLines[i].productType=val;
+  renderLI();
+}
+function updOverride(i,field,val){
+  if(field==='payout'){
+    tmpLines[i].overridePayout = val===''||val===null ? null : parseFloat(val);
+  } else if(field==='type'){
+    tmpLines[i].overrideType = val;
+  }
+  renderLI();
+}
+function rmLI(i){tmpLines.splice(i,1);renderLI();}
+function addLineItem(){const pid=document.getElementById('li-prod').value;if(!pid){alert('Select a product.');return;}const qty=Math.max(1,parseInt(document.getElementById('li-qty').value)||1);const ex=tmpLines.findIndex(l=>l.pid===pid);if(ex>=0)tmpLines[ex].qty=(tmpLines[ex].qty||1)+qty;else tmpLines.push({pid,qty});document.getElementById('li-qty').value=1;renderLI();}
+function recalcOrder(){
+  const totRev=tmpLines.reduce((a,l)=>a+effectiveRevenue(l.pid,l.productType||'New')*(l.qty||1),0);
+  const sp=getSP(document.getElementById('o-sp').value);
+  const payout=calcPayoutWithOverrides(sp,tmpLines);
+  document.getElementById('ot-items').textContent=tmpLines.reduce((a,l)=>a+(l.qty||1),0);
+  document.getElementById('ot-rev').textContent='AED '+totRev.toLocaleString();
+  document.getElementById('ot-payout').textContent=sp.type==='Staff'?'Via commission targets':'AED '+payout.toLocaleString();
+  document.getElementById('ot-net').textContent=sp.type==='Staff'?'—':'AED '+(totRev-payout).toLocaleString();
+  // Show override summary if any overrides active
+  const overrideCount=tmpLines.filter(l=>l.overridePayout!==null&&l.overridePayout!==undefined&&l.overridePayout!=='').length;
+  const existing=document.getElementById('ot-override-note');
+  if(existing)existing.remove();
+  if(overrideCount>0){
+    const note=document.createElement('span');
+    note.id='ot-override-note';
+    note.style.cssText='color:#BA7517;font-size:11px;font-weight:500';
+    note.innerHTML=`<i class="ti ti-lock-open" style="font-size:11px"></i> ${overrideCount} line item${overrideCount>1?'s':''} with override payout`;
+    document.querySelector('.ototal').appendChild(note);
+  }
+}
+
+// Calculate payout considering per-line overrides
+function calcPayoutWithOverrides(sp, lines){
+  if(!sp||!lines||!lines.length) return 0;
+  if(sp.type==='Staff') return 0;
+  // Default rate for the whole order
+  const totRev=lines.reduce((a,l)=>a+getProd(l.pid).rev*(l.qty||1),0);
+  let defaultRate=0;
+  if(sp.payoutModel==='fixed') return calcDefaultPlusTotalOverride(sp,lines,totRev);
+  // For percent/per_line: calculate per line item, apply override where set
+  return lines.reduce((total,l)=>{
+    const p=getProd(l.pid);
+    const q=l.qty||1;
+    const lineRev=effectiveRevenue(l.pid,l.productType||'New')*q;
+    // Default payout for this line
+    let defaultLinePayout=0;
+    if(sp.payoutModel==='percent')    defaultLinePayout=Math.round(lineRev*sp.payoutValue/100);
+    if(sp.payoutModel==='per_line')   defaultLinePayout=sp.payoutValue*q;
+    // Apply override
+    const hasOverride=l.overridePayout!==null&&l.overridePayout!==undefined&&l.overridePayout!=='';
+    if(hasOverride){
+      const ov=Number(l.overridePayout);
+      if(l.overrideType==='replace') return total+ov;
+      if(l.overrideType==='add')     return total+defaultLinePayout+ov;
+    }
+    return total+defaultLinePayout;
+  },0);
+}
+
+function calcDefaultPlusTotalOverride(sp,lines,totRev){
+  // Fixed model: one flat rate. If any overrides exist, apply them
+  const hasAnyOverride=lines.some(l=>l.overridePayout!==null&&l.overridePayout!==undefined&&l.overridePayout!=='');
+  if(!hasAnyOverride) return sp.payoutValue;
+  // Fixed + overrides: override lines replace/add their portion; non-override lines get proportional share
+  const overrideTotal=lines.filter(l=>l.overridePayout!==null&&l.overridePayout!==undefined&&l.overridePayout!=='')
+    .reduce((a,l)=>a+(l.overrideType==='add'?sp.payoutValue*(getProd(l.pid).rev*(l.qty||1))/totRev+Number(l.overridePayout):Number(l.overridePayout)),0);
+  const nonOverridePayout=lines.filter(l=>l.overridePayout===null||l.overridePayout===undefined||l.overridePayout==='')
+    .reduce((a,l)=>a+sp.payoutValue*(getProd(l.pid).rev*(l.qty||1))/totRev,0);
+  return Math.round(overrideTotal+nonOverridePayout);
+}
+async function unlockOverride(){
+  if(overrideUnlocked){
+    // Lock again
+    overrideUnlocked=false;
+    document.getElementById('override-lock-btn').innerHTML='<i class="ti ti-lock"></i> Unlock override payout';
+    document.getElementById('override-lock-btn').className='btn warn';
+    document.getElementById('override-unlocked-banner').style.display='none';
+    renderLI();return;
+  }
+  // Ask for PIN
+  const pin=prompt('Enter manager PIN to unlock override payout:');
+  if(!pin){return;}
+  try{
+    const res=await jsonpGet({action:'verifyPin',pin});
+    if(res.valid){
+      overrideUnlocked=true;
+      document.getElementById('override-lock-btn').innerHTML='<i class="ti ti-lock-open"></i> Override unlocked — click to lock';
+      document.getElementById('override-lock-btn').className='btn grn';
+      document.getElementById('override-unlocked-banner').style.display='block';
+      renderLI();
+    } else {
+      alert('Incorrect PIN. Override payout remains locked.');
+    }
+  }catch(e){alert('PIN verification failed: '+e.message);}
+}
+
+async function saveOrder(){
+  const custId=document.getElementById('o-cust-id').value;if(!custId){alert('Please select a customer.');return;}
+  if(!tmpLines.length){alert('Add at least one product.');return;}
+  const sp=getSP(document.getElementById('o-sp').value);
+  const payout=calcPayout(sp,tmpLines);
+  const btn=document.getElementById('save-order-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Saving...';
+  const order={
+    id:editOrderId||null,
+    date:document.getElementById('o-date').value,
+    customerId:custId,
+    salespersonId:document.getElementById('o-sp').value,
+    lines:tmpLines.map(l=>({
+      pid:          l.pid,
+      qty:          l.qty,
+      productType:  l.productType||'New',
+      overridePayout: (l.overridePayout!==null&&l.overridePayout!==undefined&&l.overridePayout!=='') ? Number(l.overridePayout) : null,
+      overrideType:   l.overrideType||'replace',
+      overrideNote:   l.overrideNote||''
+    })),
+    payout,
+    status:document.getElementById('o-status').value,
+    notes:document.getElementById('o-notes').value
+  };
+  try{
+    const res=await jsonpPost({action:'saveOrder',data:order});order.id=order.id||res.id;
+    const idx=S.orders.findIndex(o=>o.id===editOrderId);if(idx>=0)S.orders[idx]=order;else S.orders.push(order);
+    closeModal('modal-order');renderOrders();toast('Order saved ✓');
+  }catch(e){toast('Failed: '+e.message);}
+  finally{btn.disabled=false;btn.innerHTML='Save order';}
+}
+
+// ── PRODUCT TYPE RATES ────────────────────────────────────
+function openTypeRatesModal(prodId){
+  const p=getProd(prodId);
+  document.getElementById('tr-prod-id').value=prodId;
+  document.getElementById('tr-title').innerHTML=`<i class="ti ti-currency-dollar" style="color:#1D9E75"></i>Type rates — ${p.name}`;
+  document.getElementById('tr-product-name').textContent='';
+  // Load existing rates
+  ['New','Existing','MNP'].forEach(t=>{
+    const key=t==='New'?'new':t==='Existing'?'exi':'mnp';
+    const ptr=S.productTypeRevenues.find(r=>r.productId===prodId&&r.type===t);
+    document.getElementById(`tr-${key}-rev`).value   = ptr?ptr.revenue:'';
+    document.getElementById(`tr-${key}-opval`).value = ptr?ptr.opVal:'';
+  });
+  document.getElementById('modal-type-rates').classList.add('open');
+}
+
+async function saveTypeRates(){
+  const prodId=document.getElementById('tr-prod-id').value;
+  const types=['New','Existing','MNP'];
+  const keys =['new','exi','mnp'];
+  let saved=0;
+  for(let i=0;i<types.length;i++){
+    const rev  = document.getElementById(`tr-${keys[i]}-rev`).value;
+    const opVal= document.getElementById(`tr-${keys[i]}-opval`).value;
+    if(rev===''&&opVal==='') continue; // skip if both blank
+    const existing=S.productTypeRevenues.find(r=>r.productId===prodId&&r.type===types[i]);
+    const data={
+      id:       existing?existing.id:null,
+      productId:prodId,
+      type:     types[i],
+      revenue:  parseFloat(rev)||0,
+      opVal:    parseFloat(opVal)||0
+    };
+    try{
+      const res=await jsonpPost({action:'saveProductTypeRevenue',pin:managerPin,data});
+      data.id=data.id||res.id;
+      const idx=S.productTypeRevenues.findIndex(r=>r.id===data.id);
+      if(idx>=0)S.productTypeRevenues[idx]=data;else S.productTypeRevenues.push(data);
+      saved++;
+    }catch(e){toast('Save failed for '+types[i]+': '+e.message);}
+  }
+  closeModal('modal-type-rates');
+  if(saved>0) toast(`Type rates saved (${saved} type${saved>1?'s':''}) ✓`);
+}
+
+// ── COMMISSION RULES ──────────────────────────────────────
+function renderCommRules(){
+  const rules = S.commissionRules;
+  if(!rules.length){
+    document.getElementById('commrules-list').innerHTML='<div style="padding:20px;color:#bbb;font-size:13px;text-align:center">No commission rules yet. Add a global rule to get started.</div>';
+    return;
+  }
+  // Group: global first, then individual
+  const global   = rules.filter(r=>r.isGlobal);
+  const personal = rules.filter(r=>!r.isGlobal);
+
+  let html='';
+  if(global.length){
+    html+=`<div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px"><i class="ti ti-world"></i> Global rule (applies to all staff)</div>`;
+    html+=global.map(r=>ruleCard(r,'#EAF3DE','#27500A')).join('');
+  }
+  if(personal.length){
+    html+=`<div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px"><i class="ti ti-user"></i> Individual rules (override global for specific staff)</div>`;
+    html+=personal.map(r=>ruleCard(r,'#EEEDFE','#3C3489')).join('');
+  }
+  document.getElementById('commrules-list').innerHTML=html;
+}
+
+function ruleCard(r,bg,tc){
+  const sp=r.isGlobal?'All staff':getSP(r.salespersonId).name;
+  const until=r.monthTo?`to ${r.monthTo}`:'(open-ended)';
+  return`<div style="background:${bg};border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid rgba(0,0,0,.06)">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+      <div>
+        <div style="font-weight:600;font-size:13px;color:${tc}">${sp} ${r.isGlobal?'<span class="badge b-comp" style="font-size:10px">GLOBAL</span>':'<span class="badge b-staff" style="font-size:10px">INDIVIDUAL</span>'}</div>
+        <div style="font-size:11px;color:#666;margin-top:3px">Valid: ${r.monthFrom} ${until} · ID: ${r.id}</div>
+        ${r.notes?`<div style="font-size:11px;color:#888;margin-top:2px"><i class="ti ti-notes" style="font-size:11px"></i> ${r.notes}</div>`:''}
+      </div>
+      <div style="display:flex;gap:5px;flex-shrink:0">
+        ${r.active?'<span class="badge b-comp">Active</span>':'<span class="badge b-canc">Inactive</span>'}
+        <button class="btn sm" onclick="openCommRuleModal('${r.id}')"><i class="ti ti-edit"></i></button>
+        <button class="btn sm dan" onclick="delCommRule('${r.id}')"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>
+    <div style="background:rgba(255,255,255,.6);border-radius:8px;padding:10px;font-size:12px">
+      <div style="margin-bottom:8px"><b>Count eligibility gate:</b> Staff must achieve ≥ <b>${r.countEligibilityPct}%</b> of count target to qualify for any commission</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div style="text-align:center"><div style="font-size:10px;color:#888;margin-bottom:3px">Tier 1</div><div style="font-size:11px;color:#633806">MRC ≥ ${r.tier1Min}%</div><div style="font-weight:700;font-size:16px;color:#633806">${r.tier1Pct}%</div></div>
+        <div style="text-align:center"><div style="font-size:10px;color:#888;margin-bottom:3px">Tier 2</div><div style="font-size:11px;color:#0C447C">MRC ≥ ${r.tier2Min}%</div><div style="font-weight:700;font-size:16px;color:#0C447C">${r.tier2Pct}%</div></div>
+        <div style="text-align:center"><div style="font-size:10px;color:#888;margin-bottom:3px">Tier 3</div><div style="font-size:11px;color:#27500A">MRC ≥ ${r.tier3Min}%</div><div style="font-weight:700;font-size:16px;color:#27500A">${r.tier3Pct}%</div></div>
+        <div style="text-align:center"><div style="font-size:10px;color:#888;margin-bottom:3px">Tier 4</div><div style="font-size:11px;color:#3C3489">MRC ≥ ${r.tier4Min}%</div><div style="font-weight:700;font-size:16px;color:#3C3489">${r.tier4Pct}%</div></div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:#666">Commission applied to: <b>MRC achieved</b></div>
+    </div>
+  </div>`;
+}
+
+function openCommRuleModal(id=null, prefillSP=null){
+  const r = id ? S.commissionRules.find(x=>x.id===id) : null;
+  document.getElementById('crm-title').innerHTML=`<i class="ti ti-calculator" style="color:#185FA5"></i>${id?'Edit':'Add'} commission rule`;
+  // Populate salesperson dropdown
+  const staff = S.salespeople.filter(s=>s.type==='Staff');
+  document.getElementById('cr-sp').innerHTML=
+    '<option value="ALL">🌐 ALL staff (global default)</option>'+
+    staff.map(s=>`<option value="${s.id}">${s.name} (${s.employeeId||s.id})</option>`).join('');
+  if(r) document.getElementById('cr-sp').value=r.salespersonId;
+  else if(prefillSP) document.getElementById('cr-sp').value=prefillSP;
+  document.getElementById('cr-active').value = r?(r.active?'YES':'NO'):'YES';
+  document.getElementById('cr-from').value   = r?r.monthFrom:'';
+  document.getElementById('cr-to').value     = r?r.monthTo:'';
+  document.getElementById('cr-count-elig').value = r?r.countEligibilityPct:90;
+  document.getElementById('cr-t1-min').value = r?r.tier1Min:70;
+  document.getElementById('cr-t1-pct').value = r?r.tier1Pct:2;
+  document.getElementById('cr-t2-min').value = r?r.tier2Min:90;
+  document.getElementById('cr-t2-pct').value = r?r.tier2Pct:3;
+  document.getElementById('cr-t3-min').value = r?r.tier3Min:100;
+  document.getElementById('cr-t3-pct').value = r?r.tier3Pct:4;
+  document.getElementById('cr-t4-min').value = r?r.tier4Min:120;
+  document.getElementById('cr-t4-pct').value = r?r.tier4Pct:6;
+  document.getElementById('cr-notes').value  = r?r.notes:'';
+  // Store editing ID
+  window._editCommRuleId = id;
+  document.getElementById('modal-commrule').classList.add('open');
+}
+
+async function saveCommRule(){
+  const from=document.getElementById('cr-from').value;
+  if(!from){alert('Please set the month this rule applies from.');return;}
+  const data={
+    id:         window._editCommRuleId||null,
+    salespersonId: document.getElementById('cr-sp').value,
+    monthFrom:  from,
+    monthTo:    document.getElementById('cr-to').value,
+    countEligibilityPct: parseFloat(document.getElementById('cr-count-elig').value)||90,
+    tier1Min:   parseFloat(document.getElementById('cr-t1-min').value)||70,
+    tier1Pct:   parseFloat(document.getElementById('cr-t1-pct').value)||0,
+    tier2Min:   parseFloat(document.getElementById('cr-t2-min').value)||90,
+    tier2Pct:   parseFloat(document.getElementById('cr-t2-pct').value)||0,
+    tier3Min:   parseFloat(document.getElementById('cr-t3-min').value)||100,
+    tier3Pct:   parseFloat(document.getElementById('cr-t3-pct').value)||0,
+    tier4Min:   parseFloat(document.getElementById('cr-t4-min').value)||120,
+    tier4Pct:   parseFloat(document.getElementById('cr-t4-pct').value)||0,
+    baseOn:     'MRC',
+    notes:      document.getElementById('cr-notes').value,
+    active:     document.getElementById('cr-active').value!=='NO'
+  };
+  try{
+    const res=await jsonpPost({action:'saveCommRule',pin:managerPin,data});
+    if(!res.success){toast('Error: '+(res.message||'Save failed.'));return;}
+    data.id=data.id||res.id;
+    data.isGlobal=data.salespersonId==='ALL';
+    const idx=S.commissionRules.findIndex(r=>r.id===data.id);
+    if(idx>=0)S.commissionRules[idx]=data;else S.commissionRules.push(data);
+    closeModal('modal-commrule');renderCommRules();
+    toast('Commission rule saved ✓');
+  }catch(e){toast('Save failed: '+e.message);}
+}
+
+async function delCommRule(id){
+  if(!confirm('Delete this commission rule?'))return;
+  await jsonpPost({action:'deleteCommRule',pin:managerPin,id});
+  S.commissionRules=S.commissionRules.filter(r=>r.id!==id);
+  renderCommRules();toast('Rule deleted');
+}
+
+// ── UTILS ─────────────────────────────────────────────────
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(el=>el.addEventListener('click',function(e){if(e.target===this)closeModal(this.id);}));
+let toastTimer;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3500);}
+function getMonthKey(date){const d=date||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+// ── STAGE FUNCTIONS ───────────────────────────────────────
+function getNextStages(status, lines){
+  const subcats = (lines||[]).map(l => getProd(l.pid).subcat || '');
+  const hasFixed = subcats.some(s => ['Fixed','Wireless'].includes(s));
+  const hasGSM   = subcats.some(s => ['GSM Postpaid','GSM Prepaid'].includes(s));
+  switch(status){
+    case 'Pending':          return ['Processing','Rejected'];
+    case 'Processing':       return ['Submitted','Rejected'];
+    case 'Submitted':        return ['Activity Created','Rejected'];
+    case 'Activity Created':
+      const opts = [];
+      if(hasFixed || (!hasFixed && !hasGSM)) opts.push('WO Created');
+      if(hasGSM) opts.push('Biometric Done');
+      opts.push('Rejected');
+      return opts;
+    case 'WO Created':       return ['Activated','Rejected'];
+    case 'Biometric Done':   return ['Activated','Rejected'];
+    default:                 return [];
+  }
+}
+
+function openAdvanceStage(orderId){
+  const o = S.orders.find(x => x.id === orderId);
+  if(!o){ alert('Order not found.'); return; }
+  const cust = getCust(o.customerId);
+  const sp   = getSP(o.salespersonId);
+  document.getElementById('stage-order-id').value = orderId;
+  document.getElementById('stage-modal-title').innerHTML =
+    '<i class="ti ti-git-branch" style="color:#185FA5"></i> Advance stage — ' + orderId;
+  document.getElementById('stage-order-summary').innerHTML =
+    '<div style="font-weight:600">' + cust.name + '</div>' +
+    '<div style="color:#888;margin-top:2px">Current stage: <b>' + o.status + '</b> · Salesperson: ' + sp.name + '</div>';
+  const nextStages = getNextStages(o.status, o.lines || []);
+  if(!nextStages.length){
+    alert('This order cannot be advanced further.');
+    return;
+  }
+  document.getElementById('stage-to-select').innerHTML =
+    '<option value="">Select next stage</option>' +
+    nextStages.map(s => '<option value="' + s + '">' + s + '</option>').join('');
+  document.getElementById('stage-fields-container').innerHTML = '';
+  document.getElementById('modal-stage').classList.add('open');
+}
+
+function renderStageFields(){
+  const stage  = document.getElementById('stage-to-select').value;
+  const fields = (typeof STAGE_FIELDS !== 'undefined' ? STAGE_FIELDS[stage] : null) || [];
+  const container = document.getElementById('stage-fields-container');
+  if(!fields.length){
+    container.innerHTML = '<div style="font-size:12px;color:#aaa;padding:6px 0">No additional data required for this stage.</div>';
+    return;
+  }
+  let html = '<div style="background:#f8f8f6;border-radius:10px;padding:14px;margin-top:4px">';
+  html += '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Data for &quot;' + stage + '&quot; stage</div>';
+  fields.forEach(f => {
+    html += '<div style="display:flex;flex-direction:column;gap:3px;margin-bottom:8px">';
+    html += '<label style="font-size:11px;color:#888;font-weight:500">' + f.label + '</label>';
+    html += '<input id="sf-' + f.id + '" type="' + f.type + '" placeholder="' + (f.placeholder||'') + '" style="font-size:13px;padding:7px 10px;border-radius:7px;border:1px solid #ddd;background:#fff">';
+    html += '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+async function submitAdvanceStage(){
+  const orderId = document.getElementById('stage-order-id').value;
+  const toStage = document.getElementById('stage-to-select').value;
+  if(!toStage){ alert('Please select the next stage.'); return; }
+  const fields = (typeof STAGE_FIELDS !== 'undefined' ? STAGE_FIELDS[toStage] : null) || [];
+  const stageData = {};
+  fields.forEach(f => {
+    const el = document.getElementById('sf-' + f.id);
+    if(el) stageData[f.id] = el.value;
+  });
+  // Validate required fields
+  for(const f of fields){
+    if(f.label.includes('*') && (!stageData[f.id] || !stageData[f.id].trim())){
+      alert('Please fill in: ' + f.label.replace(' *',''));
+      return;
+    }
+  }
+  try{
+    const res = await jsonpPost({
+      action: 'advanceStage',
+      data: { orderId, toStage, stageData, enteredBy: 'Dashboard user' }
+    });
+    if(!res.success){ alert(res.message || 'Failed to advance stage.'); return; }
+    // Update local state
+    const o = S.orders.find(x => x.id === orderId);
+    if(o) o.status = res.newStatus;
+    S.orderStages = S.orderStages || [];
+    S.orderStages.push({
+      id: res.stageId, orderId, stage: toStage,
+      enteredBy: 'Dashboard user',
+      enteredAt: new Date().toISOString(),
+      ...stageData
+    });
+    closeModal('modal-stage');
+    if(typeof renderOrders === 'function') renderOrders();
+    toast('Stage advanced to "' + toStage + '" ✓');
+  }catch(e){ toast('Failed: ' + e.message); }
+}// ── STAGE FUNCTIONS ───────────────────────────────────────
+function getNextStages(status, lines){
+  const subcats = (lines||[]).map(l => getProd(l.pid).subcat || '');
+  const hasFixed = subcats.some(s => ['Fixed','Wireless'].includes(s));
+  const hasGSM   = subcats.some(s => ['GSM Postpaid','GSM Prepaid'].includes(s));
+  switch(status){
+    case 'Pending':          return ['Processing','Rejected'];
+    case 'Processing':       return ['Submitted','Rejected'];
+    case 'Submitted':        return ['Activity Created','Rejected'];
+    case 'Activity Created':
+      const opts = [];
+      if(hasFixed || (!hasFixed && !hasGSM)) opts.push('WO Created');
+      if(hasGSM) opts.push('Biometric Done');
+      opts.push('Rejected');
+      return opts;
+    case 'WO Created':       return ['Activated','Rejected'];
+    case 'Biometric Done':   return ['Activated','Rejected'];
+    default:                 return [];
+  }
+}
+
+function openAdvanceStage(orderId){
+  const o = S.orders.find(x => x.id === orderId);
+  if(!o){ alert('Order not found.'); return; }
+  const cust = getCust(o.customerId);
+  const sp   = getSP(o.salespersonId);
+  document.getElementById('stage-order-id').value = orderId;
+  document.getElementById('stage-modal-title').innerHTML =
+    '<i class="ti ti-git-branch" style="color:#185FA5"></i> Advance stage — ' + orderId;
+  document.getElementById('stage-order-summary').innerHTML =
+    '<div style="font-weight:600">' + cust.name + '</div>' +
+    '<div style="color:#888;margin-top:2px">Current stage: <b>' + o.status + '</b> · Salesperson: ' + sp.name + '</div>';
+  const nextStages = getNextStages(o.status, o.lines || []);
+  if(!nextStages.length){
+    alert('This order cannot be advanced further.');
+    return;
+  }
+  document.getElementById('stage-to-select').innerHTML =
+    '<option value="">Select next stage</option>' +
+    nextStages.map(s => '<option value="' + s + '">' + s + '</option>').join('');
+  document.getElementById('stage-fields-container').innerHTML = '';
+  document.getElementById('modal-stage').classList.add('open');
+}
+
+function renderStageFields(){
+  const stage  = document.getElementById('stage-to-select').value;
+  const fields = (typeof STAGE_FIELDS !== 'undefined' ? STAGE_FIELDS[stage] : null) || [];
+  const container = document.getElementById('stage-fields-container');
+  if(!fields.length){
+    container.innerHTML = '<div style="font-size:12px;color:#aaa;padding:6px 0">No additional data required for this stage.</div>';
+    return;
+  }
+  let html = '<div style="background:#f8f8f6;border-radius:10px;padding:14px;margin-top:4px">';
+  html += '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Data for &quot;' + stage + '&quot; stage</div>';
+  fields.forEach(f => {
+    html += '<div style="display:flex;flex-direction:column;gap:3px;margin-bottom:8px">';
+    html += '<label style="font-size:11px;color:#888;font-weight:500">' + f.label + '</label>';
+    html += '<input id="sf-' + f.id + '" type="' + f.type + '" placeholder="' + (f.placeholder||'') + '" style="font-size:13px;padding:7px 10px;border-radius:7px;border:1px solid #ddd;background:#fff">';
+    html += '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+async function submitAdvanceStage(){
+  const orderId = document.getElementById('stage-order-id').value;
+  const toStage = document.getElementById('stage-to-select').value;
+  if(!toStage){ alert('Please select the next stage.'); return; }
+  const fields = (typeof STAGE_FIELDS !== 'undefined' ? STAGE_FIELDS[toStage] : null) || [];
+  const stageData = {};
+  fields.forEach(f => {
+    const el = document.getElementById('sf-' + f.id);
+    if(el) stageData[f.id] = el.value;
+  });
+  // Validate required fields
+  for(const f of fields){
+    if(f.label.includes('*') && (!stageData[f.id] || !stageData[f.id].trim())){
+      alert('Please fill in: ' + f.label.replace(' *',''));
+      return;
+    }
+  }
+  try{
+    const res = await jsonpPost({
+      action: 'advanceStage',
+      data: { orderId, toStage, stageData, enteredBy: 'Dashboard user' }
+    });
+    if(!res.success){ alert(res.message || 'Failed to advance stage.'); return; }
+    // Update local state
+    const o = S.orders.find(x => x.id === orderId);
+    if(o) o.status = res.newStatus;
+    S.orderStages = S.orderStages || [];
+    S.orderStages.push({
+      id: res.stageId, orderId, stage: toStage,
+      enteredBy: 'Dashboard user',
+      enteredAt: new Date().toISOString(),
+      ...stageData
+    });
+    closeModal('modal-stage');
+    if(typeof renderOrders === 'function') renderOrders();
+    toast('Stage advanced to "' + toStage + '" ✓');
+  }catch(e){ toast('Failed: ' + e.message); }
+}
+// ── STAGE FILTER BUTTONS ──────────────────────────────────
+let activeStageFilter = '';
+
+function setStageFilter(stage, btn){
+  activeStageFilter = stage;
+  document.querySelectorAll('.stage-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderOrders();
+}
+
+function clearDateFilter(){
+  document.getElementById('filter-date-from').value = '';
+  document.getElementById('filter-date-to').value   = '';
+  renderOrders();
+}
+
+function updateStageFilterCounts(){
+  const idMap = {
+    'Pending':'Pending','Processing':'Processing','Submitted':'Submitted',
+    'Activity Created':'ActivityCreated','WO Created':'WOCreated',
+    'Biometric Done':'BiometricDone','Activated':'Activated','Rejected':'Rejected'
+  };
+  let total = 0;
+  Object.keys(idMap).forEach(s => {
+    const count = S.orders.filter(o => o.status === s).length;
+    total += count;
+    const el = document.getElementById('sf-count-' + idMap[s]);
+    if(el) el.textContent = count > 0 ? count : '';
+  });
+  const allEl = document.getElementById('sf-count-all');
+  if(allEl) allEl.textContent = total > 0 ? total : '';
+}
+// ── KANBAN BOARD ──────────────────────────────────────────
+const KANBAN_STAGES = ['Pending','Processing','Submitted','Activity Created','WO Created','Biometric Done'];
+const KANBAN_COLORS = {
+  'Pending':          {bg:'#FAEEDA',tc:'#633806',bc:'#F0C070'},
+  'Processing':       {bg:'#E6F1FB',tc:'#0C447C',bc:'#C8DCEF'},
+  'Submitted':        {bg:'#FFF3E0',tc:'#E65100',bc:'#FFD180'},
+  'Activity Created': {bg:'#F3E5F5',tc:'#6A1B9A',bc:'#CE93D8'},
+  'WO Created':       {bg:'#E8F5E9',tc:'#1B5E20',bc:'#A5D6A7'},
+  'Biometric Done':   {bg:'#FCE4EC',tc:'#880E4F',bc:'#F48FB1'}
+};
+
+function clearKanbanDates(){
+  document.getElementById('kanban-date-from').value='';
+  document.getElementById('kanban-date-to').value='';
+  renderKanban();
+}
+
+function renderKanban(){
+  if(!S.orders||!S.orders.length){document.getElementById('kanban-board').innerHTML='<div style="color:#bbb;padding:20px">No data loaded yet. Click Refresh data.</div>';return;}
+  const dateFrom=document.getElementById('kanban-date-from').value;
+  const dateTo  =document.getElementById('kanban-date-to').value;
+  let orders=[...S.orders];
+  if(dateFrom) orders=orders.filter(o=>o.date>=dateFrom);
+  if(dateTo)   orders=orders.filter(o=>o.date<=dateTo);
+
+  const board=document.getElementById('kanban-board');
+  board.innerHTML=KANBAN_STAGES.map(stage=>{
+    const stageOrders=orders.filter(o=>o.status===stage)
+      .sort((a,b)=>new Date(a.date)-new Date(b.date));
+    const col=KANBAN_COLORS[stage]||{bg:'#f8f8f6',tc:'#888',bc:'#eee'};
+    const totalRev=stageOrders.reduce((a,o)=>a+oRev(o),0);
+
+    const cards=stageOrders.map(o=>{
+      const cust=getCust(o.customerId);
+      const sp=getSP(o.salespersonId);
+      const rev=oRev(o);
+      const prods=[...new Set((o.lines||[]).map(l=>getProd(l.pid).name))];
+      // Time in stage
+      const lastStage=(S.orderStages||[])
+        .filter(s=>s.orderId===o.id)
+        .sort((a,b)=>new Date(a.enteredAt)-new Date(b.enteredAt))
+        .pop();
+      const lastTime=lastStage?new Date(lastStage.enteredAt):new Date(o.date);
+      const elapsed=Math.round((Date.now()-lastTime.getTime())/3600000*10)/10;
+      const slaHrs=(S.settings.sla&&S.settings.sla[stage])||48;
+      const slaPct=(elapsed/slaHrs)*100;
+      const slaColor=slaPct>=100?'#A32D2D':slaPct>=75?'#BA7517':'#1D9E75';
+
+      return`<div style="background:#fff;border:1px solid #eee;border-radius:10px;padding:10px;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:700;color:#185FA5;margin-bottom:4px">${o.id}</div>
+        <div style="font-weight:600;font-size:13px;margin-bottom:2px">${cust.name}</div>
+        <div style="font-size:11px;color:#888;margin-bottom:4px">${sp.name} · ${o.date}</div>
+        <div style="font-size:11px;color:#888;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:2px">
+          ${prods.slice(0,2).map(n=>`<span class="ppill" style="font-size:10px">${n.length>14?n.slice(0,14)+'…':n}</span>`).join('')}
+          ${prods.length>2?`<span class="ppill" style="font-size:10px">+${prods.length-2}</span>`:''}
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:600;font-size:12px">AED ${rev.toLocaleString()}</span>
+          <span style="font-size:10px;color:${slaColor}"><i class="ti ti-clock" style="font-size:10px"></i> ${elapsed}h / ${slaHrs}h</span>
+        </div>
+        <button class="btn grn sm" style="width:100%;justify-content:center"
+          onclick="openAdvanceStage('${o.id}');event.stopPropagation()">
+          <i class="ti ti-arrow-right"></i> Advance
+        </button>
+      </div>`;
+    }).join('');
+
+    return`<div style="min-width:220px;max-width:220px;flex-shrink:0">
+      <div style="background:${col.bg};border:1px solid ${col.bc};border-radius:10px;padding:10px;margin-bottom:8px">
+        <div style="font-weight:700;font-size:12px;color:${col.tc}">${stage}</div>
+        <div style="font-size:11px;color:${col.tc};margin-top:2px;display:flex;justify-content:space-between">
+          <span>${stageOrders.length} order${stageOrders.length!==1?'s':''}</span>
+          <span>AED ${totalRev.toLocaleString()}</span>
+        </div>
+      </div>
+      ${cards||`<div style="text-align:center;color:#bbb;font-size:12px;padding:20px 0">No orders</div>`}
+    </div>`;
+  }).join('');
+}
+
+// ── REPORTS ───────────────────────────────────────────────
+let reportTrendChart=null;
+
+function clearReportDates(){
+  document.getElementById('report-date-from').value='';
+  document.getElementById('report-date-to').value='';
+  renderReports();
+}
+
+function renderReports(){
+  if(!S.orders||!S.orders.length){document.getElementById('report-stage-summary').innerHTML='<div style="color:#bbb;padding:20px">No data loaded yet. Click Refresh data.</div>';return;}
+  const dateFrom=document.getElementById('report-date-from').value;
+  const dateTo  =document.getElementById('report-date-to').value;
+  let orders=[...S.orders];
+  if(dateFrom) orders=orders.filter(o=>o.date>=dateFrom);
+  if(dateTo)   orders=orders.filter(o=>o.date<=dateTo);
+
+  // 1. Stage Summary
+  const allStages=['Pending','Processing','Submitted','Activity Created','WO Created','Biometric Done','Activated','Rejected'];
+  const stageSummaryHtml=`
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr>
+        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;color:#888">Stage</th>
+        <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;color:#888">Orders</th>
+        <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;color:#888">Total Revenue</th>
+        <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;color:#888">Total MRC</th>
+      </tr></thead>
+      <tbody>
+        ${allStages.map(stage=>{
+          const stOrders=orders.filter(o=>o.status===stage);
+          const rev=stOrders.reduce((a,o)=>a+oRev(o),0);
+          const mrc=stOrders.reduce((a,o)=>a+(o.lines||[]).reduce((b,l)=>b+getProd(l.pid).mrc*(l.qty||1),0),0);
+          if(!stOrders.length) return '';
+          return`<tr style="border-bottom:1px solid #f5f5f5">
+            <td style="padding:8px"><span class="badge ${bCls(stage)}">${stage}</span></td>
+            <td style="padding:8px;text-align:right;font-weight:600">${stOrders.length}</td>
+            <td style="padding:8px;text-align:right">AED ${rev.toLocaleString()}</td>
+            <td style="padding:8px;text-align:right;color:#185FA5">AED ${mrc.toLocaleString()}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+  document.getElementById('report-stage-summary').innerHTML=stageSummaryHtml;
+
+  // 2. SLA Breached
+  const slaOrders=orders.filter(o=>{
+    if(['Activated','Completed','Rejected','Cancelled'].includes(o.status)) return false;
+    const lastStage=(S.orderStages||[])
+      .filter(s=>s.orderId===o.id)
+      .sort((a,b)=>new Date(a.enteredAt)-new Date(b.enteredAt))
+      .pop();
+    const lastTime=lastStage?new Date(lastStage.enteredAt):new Date(o.date);
+    const elapsed=(Date.now()-lastTime.getTime())/3600000;
+    const slaHrs=(S.settings.sla&&S.settings.sla[o.status])||48;
+    return elapsed>slaHrs;
+  });
+
+  document.getElementById('report-sla').innerHTML=slaOrders.length?`
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr>
+        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;color:#888">Order</th>
+        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;color:#888">Customer</th>
+        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;color:#888">Stage</th>
+        <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;color:#888">Elapsed</th>
+        <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;color:#888">SLA</th>
+        <th style="padding:6px 8px;border-bottom:1px solid #eee"></th>
+      </tr></thead>
+      <tbody>
+        ${slaOrders.map(o=>{
+          const cust=getCust(o.customerId);
+          const lastStage=(S.orderStages||[])
+            .filter(s=>s.orderId===o.id)
+            .sort((a,b)=>new Date(a.enteredAt)-new Date(b.enteredAt))
+            .pop();
+          const lastTime=lastStage?new Date(lastStage.enteredAt):new Date(o.date);
+          const elapsed=Math.round((Date.now()-lastTime.getTime())/3600000*10)/10;
+          const slaHrs=(S.settings.sla&&S.settings.sla[o.status])||48;
+          return`<tr style="border-bottom:1px solid #f5f5f5;background:#FFF5F5">
+            <td style="padding:8px;font-size:11px;color:#185FA5;font-weight:600">${o.id}</td>
+            <td style="padding:8px;font-weight:600">${cust.name}</td>
+            <td style="padding:8px"><span class="badge ${bCls(o.status)}">${o.status}</span></td>
+            <td style="padding:8px;text-align:right;color:#A32D2D;font-weight:600">${elapsed}h</td>
+            <td style="padding:8px;text-align:right;color:#888">${slaHrs}h</td>
+            <td style="padding:8px">
+              <button class="btn sm grn" onclick="openAdvanceStage('${o.id}')">
+                <i class="ti ti-arrow-right"></i>
+              </button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`
+  :'<div style="color:#1D9E75;font-size:13px;padding:10px 0"><i class="ti ti-check"></i> No SLA breaches — all orders are on track</div>';
+
+  // 3. Salesperson Summary
+  const spMap={};
+  orders.forEach(o=>{
+    if(!spMap[o.salespersonId]) spMap[o.salespersonId]={orders:0,rev:0,completed:0,active:0};
+    spMap[o.salespersonId].orders++;
+    spMap[o.salespersonId].rev+=oRev(o);
+    if(['Activated','Completed'].includes(o.status)) spMap[o.salespersonId].completed++;
+    else if(!['Rejected','Cancelled'].includes(o.status)) spMap[o.salespersonId].active++;
+  });
+
+  document.getElementById('report-salesperson').innerHTML=Object.keys(spMap).length?`
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr>
+        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;color:#888">Salesperson</th>
+        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;color:#888">Type</th>
+        <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;color:#888">Total Orders</th>
+        <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;color:#888">Revenue</th>
+        <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;color:#888">Completed</th>
+        <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;color:#888">Active</th>
+      </tr></thead>
+      <tbody>
+        ${Object.entries(spMap).sort((a,b)=>b[1].rev-a[1].rev).map(([spId,st])=>{
+          const sp=getSP(spId);
+          return`<tr style="border-bottom:1px solid #f5f5f5">
+            <td style="padding:8px;font-weight:600">${sp.name}</td>
+            <td style="padding:8px"><span class="badge ${sp.type==='Staff'?'b-staff':'b-free'}">${sp.type}</span></td>
+            <td style="padding:8px;text-align:right">${st.orders}</td>
+            <td style="padding:8px;text-align:right;font-weight:600">AED ${st.rev.toLocaleString()}</td>
+            <td style="padding:8px;text-align:right;color:#1D9E75">${st.completed}</td>
+            <td style="padding:8px;text-align:right;color:#185FA5">${st.active}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`
+  :'<div style="color:#bbb;font-size:13px;padding:10px 0">No data available</div>';
+
+  // 4. Monthly Trend Chart
+  const months=[],createdD=[],completedD=[];
+  for(let i=-5;i<=0;i++){
+    const d=new Date();d.setMonth(d.getMonth()+i);
+    const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    months.push(d.toLocaleString('default',{month:'short',year:'2-digit'}));
+    createdD.push(S.orders.filter(o=>o.date&&o.date.slice(0,7)===key).length);
+    completedD.push(S.orders.filter(o=>o.date&&o.date.slice(0,7)===key&&['Activated','Completed'].includes(o.status)).length);
+  }
+  if(reportTrendChart) reportTrendChart.destroy();
+  reportTrendChart=new Chart(document.getElementById('report-trend-chart'),{
+    type:'bar',
+    data:{
+      labels:months,
+      datasets:[
+        {label:'Orders created',data:createdD,backgroundColor:'rgba(24,95,165,.8)',borderRadius:4},
+        {label:'Activated',data:completedD,backgroundColor:'rgba(29,158,117,.8)',borderRadius:4}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+      scales:{
+        y:{ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}},
+        x:{ticks:{font:{size:11}},grid:{display:false}}
+      }
+    }
+  });
+}
+// ── EXCEL EXPORT ──────────────────────────────────────────
+function exportOrdersExcel(){
+  // Get currently filtered orders (same filters as Orders view)
+  let orders=[...S.orders].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(activeStageFilter) orders=orders.filter(o=>o.status===activeStageFilter);
+  const dateFrom=document.getElementById('filter-date-from').value;
+  const dateTo  =document.getElementById('filter-date-to').value;
+  if(dateFrom) orders=orders.filter(o=>o.date>=dateFrom);
+  if(dateTo)   orders=orders.filter(o=>o.date<=dateTo);
+  const spf=document.getElementById('fsp').value;
+  const fc =document.getElementById('fcust').value;
+  if(spf) orders=orders.filter(o=>o.salespersonId===spf);
+  if(fc)  orders=orders.filter(o=>o.customerId===fc);
+
+  if(!orders.length){ alert('No orders to export with current filters.'); return; }
+
+  // ── SHEET 1: SUMMARY (one row per salesperson) ────────────
+  const spMap={};
+  orders.forEach(o=>{
+    const sp=getSP(o.salespersonId);
+    const key=o.salespersonId;
+    if(!spMap[key]){
+      spMap[key]={
+        name:sp.name, type:sp.type,
+        orders:0, lineItems:0,
+        revenue:0, mrc:0, opVal:0, payout:0
+      };
+    }
+    spMap[key].orders++;
+    (o.lines||[]).forEach(l=>{
+      const p=getProd(l.pid);
+      const q=l.qty||1;
+      const rev=effectiveRevenue(l.pid,l.productType||'New')*q;
+      spMap[key].lineItems += q;
+      spMap[key].revenue  += rev;
+      spMap[key].mrc      += p.mrc*q;
+      spMap[key].opVal    += p.opVal*q;
+    });
+    spMap[key].payout += o.payout||0;
+  });
+
+  const summaryData=[
+    ['Salesperson','Type','Orders','Line Items','Total Revenue (AED)','Total MRC (AED)','Total Operator Value (AED)','Total Payout (AED)','Net (AED)']
+  ];
+  Object.values(spMap).sort((a,b)=>b.revenue-a.revenue).forEach(r=>{
+    summaryData.push([
+      r.name, r.type, r.orders, r.lineItems,
+      r.revenue, r.mrc, r.opVal, r.payout,
+      r.revenue-r.payout
+    ]);
+  });
+  // Totals row
+  const totals=Object.values(spMap).reduce((a,r)=>({
+    orders:a.orders+r.orders, lineItems:a.lineItems+r.lineItems,
+    revenue:a.revenue+r.revenue, mrc:a.mrc+r.mrc,
+    opVal:a.opVal+r.opVal, payout:a.payout+r.payout
+  }),{orders:0,lineItems:0,revenue:0,mrc:0,opVal:0,payout:0});
+  summaryData.push([
+    'TOTAL','',totals.orders,totals.lineItems,
+    totals.revenue,totals.mrc,totals.opVal,totals.payout,
+    totals.revenue-totals.payout
+  ]);
+
+  // ── SHEET 2: DETAIL (one row per order) ───────────────────
+  const detailData=[
+    ['Order ID','Date','Customer','TL Number','Salesperson','Type','Stage','Products','Line Items','Revenue (AED)','MRC (AED)','Operator Value (AED)','Payout (AED)','Net (AED)']
+  ];
+  orders.forEach(o=>{
+    const cust=getCust(o.customerId);
+    const sp  =getSP(o.salespersonId);
+    const prods=[...new Set((o.lines||[]).map(l=>getProd(l.pid).name))].join(', ');
+    const lineItems=(o.lines||[]).reduce((a,l)=>a+(l.qty||1),0);
+    const rev=oRev(o);
+    const mrc=(o.lines||[]).reduce((a,l)=>a+getProd(l.pid).mrc*(l.qty||1),0);
+    const opVal=(o.lines||[]).reduce((a,l)=>a+getProd(l.pid).opVal*(l.qty||1),0);
+    detailData.push([
+      o.id, o.date, cust.name, cust.tlNumber,
+      sp.name, sp.type, o.status, prods,
+      lineItems, rev, mrc, opVal,
+      o.payout||0, rev-(o.payout||0)
+    ]);
+  });
+
+  // ── BUILD WORKBOOK ─────────────────────────────────────────
+  const wb=XLSX.utils.book_new();
+
+  // Summary sheet
+  const ws1=XLSX.utils.aoa_to_sheet(summaryData);
+  ws1['!cols']=[
+    {wch:25},{wch:12},{wch:8},{wch:10},
+    {wch:20},{wch:16},{wch:22},{wch:18},{wch:16}
+  ];
+  XLSX.utils.book_append_sheet(wb,ws1,'Summary');
+
+  // Detail sheet
+  const ws2=XLSX.utils.aoa_to_sheet(detailData);
+  ws2['!cols']=[
+    {wch:28},{wch:12},{wch:25},{wch:18},
+    {wch:20},{wch:12},{wch:18},{wch:30},
+    {wch:10},{wch:16},{wch:14},{wch:22},{wch:14},{wch:14}
+  ];
+  XLSX.utils.book_append_sheet(wb,ws2,'Detail');
+
+  // ── FILE NAME with date range ─────────────────────────────
+  const today=new Date().toISOString().slice(0,10);
+  const fromStr=dateFrom?dateFrom:'all';
+  const toStr  =dateTo  ?dateTo  :today;
+  const stageStr=activeStageFilter?activeStageFilter.replace(' ','-'):'All-Stages';
+  const fileName=`Orders_${stageStr}_${fromStr}_to_${toStr}.xlsx`;
+
+  XLSX.writeFile(wb,fileName);
+  toast('Excel exported: '+fileName+' ✓');
+}
+// ── TEAMS ─────────────────────────────────────────────────
+let editTeamId = null;
+
+function renderTeams(){
+  if(!S.teams||!S.teams.length){
+    document.getElementById('teams-list').innerHTML=
+      '<div style="padding:30px;text-align:center;color:#bbb;font-size:13px">'+
+      '<i class="ti ti-people" style="font-size:32px;display:block;margin-bottom:8px"></i>'+
+      'No teams yet. Click "Add team" to get started.</div>';
+    return;
+  }
+  const avBg=['#E6F1FB','#E1F5EE','#FAECE7','#FBEAF0','#EEEDFE'];
+  const avTx=['#0C447C','#085041','#712B13','#72243E','#3C3489'];
+  document.getElementById('teams-list').innerHTML=S.teams.map((t,i)=>{
+    // Get members of this team
+    const members=S.salespeople.filter(s=>s.teamId===t.id);
+    const staff=members.filter(s=>s.type==='Staff');
+    const freelancers=members.filter(s=>s.type==='Freelancer');
+    // Get orders for this team
+    const teamSpIds=members.map(s=>s.id);
+    const teamOrders=S.orders.filter(o=>teamSpIds.includes(o.salespersonId));
+    const activeOrders=teamOrders.filter(o=>
+      !['Activated','Completed','Rejected','Cancelled'].includes(o.status));
+    const totalRev=teamOrders
+      .filter(o=>['Activated','Completed'].includes(o.status))
+      .reduce((a,o)=>a+oRev(o),0);
+    const init=t.name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
+    return`<div class="perf-card" style="margin-bottom:10px">
+      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">
+        <div class="av" style="background:${avBg[i%5]};color:${avTx[i%5]};width:42px;height:42px;border-radius:10px;font-size:14px">${init}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-weight:600;font-size:14px">${t.name}</span>
+            <span class="badge ${t.active?'b-act':'b-inact'}">${t.active?'Active':'Inactive'}</span>
+          </div>
+          <div style="font-size:12px;color:#888;margin-top:3px">
+            <i class="ti ti-user-star" style="font-size:11px"></i> Team Leader: <b>${t.leader}</b>
+            ${t.notes?` · ${t.notes}`:''}
+          </div>
+        </div>
+        <div style="display:flex;gap:5px;flex-shrink:0">
+          <button class="btn sm" onclick="openTeamModal('${t.id}')">
+            <i class="ti ti-edit"></i>
+          </button>
+          <button class="btn sm dan" onclick="delTeam('${t.id}')">
+            <i class="ti ti-trash"></i>
+          </button>
+        </div>
+      </div>
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px">
+        <div class="metric">
+          <div class="ml">Staff</div>
+          <div class="mv" style="font-size:17px">${staff.length}</div>
+        </div>
+        <div class="metric">
+          <div class="ml">Freelancers</div>
+          <div class="mv" style="font-size:17px">${freelancers.length}</div>
+        </div>
+        <div class="metric">
+          <div class="ml">Active orders</div>
+          <div class="mv blue" style="font-size:17px">${activeOrders.length}</div>
+        </div>
+        <div class="metric">
+          <div class="ml">Closed revenue</div>
+          <div class="mv green" style="font-size:13px">AED ${totalRev.toLocaleString()}</div>
+        </div>
+      </div>
+      <!-- Members -->
+      <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">
+        Members (${members.length})
+      </div>
+      ${members.length?`
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${members.map(s=>`
+            <div style="background:#f8f8f6;border-radius:8px;padding:6px 10px;font-size:12px;display:flex;align-items:center;gap:6px">
+              <span class="badge ${s.type==='Staff'?'b-staff':'b-free'}" style="font-size:10px">${s.type}</span>
+              <span style="font-weight:500">${s.name}</span>
+              ${s.employeeId?`<span style="font-size:11px;color:#aaa">${s.employeeId}</span>`:''}
+            </div>`).join('')}
+        </div>`
+      :`<div style="color:#bbb;font-size:12px">No members assigned yet. Edit a salesperson to assign them to this team.</div>`}
+    </div>`;
+  }).join('');
+}
+
+function openTeamModal(id=null){
+  editTeamId=id;
+  const t=id?S.teams.find(x=>x.id===id):null;
+  document.getElementById('tm-title').innerHTML=
+    `<i class="ti ti-people" style="color:#185FA5"></i>${id?'Edit':'Add'} team`;
+  document.getElementById('tm-name').value  =t?t.name:'';
+  document.getElementById('tm-leader').value=t?t.leader:'';
+  document.getElementById('tm-notes').value =t?t.notes:'';
+  document.getElementById('tm-active').value=t?(t.active?'YES':'NO'):'YES';
+  document.getElementById('modal-team').classList.add('open');
+}
+
+async function saveTeam(){
+  const name  =document.getElementById('tm-name').value.trim();
+  const leader=document.getElementById('tm-leader').value.trim();
+  if(!name)  {alert('Team name is required.');  return;}
+  if(!leader){alert('Team leader is required.'); return;}
+  const data={
+    id:     editTeamId||null,
+    name,   leader,
+    notes:  document.getElementById('tm-notes').value,
+    active: document.getElementById('tm-active').value!=='NO'
+  };
+  try{
+    const res=await jsonpPost({action:'saveTeam',pin:managerPin,data});
+    if(!res.success){alert(res.message||'Save failed.');return;}
+    data.id=data.id||res.id;
+    const idx=S.teams.findIndex(t=>t.id===editTeamId);
+    if(idx>=0)S.teams[idx]=data;else S.teams.push(data);
+    closeModal('modal-team');
+    renderTeams();
+    toast('Team saved ✓');
+  }catch(e){toast('Failed: '+e.message);}
+}
+
+async function delTeam(id){
+  const t=S.teams.find(x=>x.id===id);
+  if(!confirm(`Delete team "${t.name}"?`))return;
+  const res=await jsonpPost({action:'deleteTeam',pin:managerPin,id});
+  if(!res.success){alert(res.message||'Cannot delete.');return;}
+  S.teams=S.teams.filter(t=>t.id!==id);
+  renderTeams();
+  toast('Team deleted');
+}
+// ── MOBILE SIDEBAR ────────────────────────────────────────
+function toggleSidebar(){
+  const sidebar=document.querySelector('.sidebar');
+  const overlay=document.getElementById('sidebar-overlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('show');
+}
+
+function closeSidebar(){
+  const sidebar=document.querySelector('.sidebar');
+  const overlay=document.getElementById('sidebar-overlay');
+  sidebar.classList.remove('open');
+  overlay.classList.remove('show');
+}
+
+// Close sidebar when nav item clicked on mobile
+document.querySelectorAll('.ni').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    if(window.innerWidth<=768) closeSidebar();
+  });
+});
+
+// Handle window resize
+window.addEventListener('resize',()=>{
+  if(window.innerWidth>768){
+    document.querySelector('.sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('show');
+  }
+});
+</script>
+<!-- Advance Stage Modal -->
+<div class="overlay" id="modal-stage">
+<div class="modal">
+  <h3 id="stage-modal-title">
+    <i class="ti ti-git-branch" style="color:#185FA5"></i>Advance stage
+  </h3>
+  <input type="hidden" id="stage-order-id">
+  <div id="stage-order-summary" style="background:#f8f8f6;border-radius:8px;padding:10px;font-size:12px;margin-bottom:12px"></div>
+  <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:12px">
+    <label style="font-size:11px;color:#888;font-weight:500">Move to stage <span style="color:#A32D2D">*</span></label>
+    <select id="stage-to-select" onchange="renderStageFields()"
+      style="font-size:13px;padding:7px 10px;border-radius:7px;border:1px solid #ddd;background:#fff">
+      <option value="">Select next stage</option>
+    </select>
+  </div>
+  <div id="stage-fields-container"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;padding-top:12px;border-top:1px solid #f0f0f0">
+    <button class="btn" onclick="closeModal('modal-stage')">Cancel</button>
+    <button class="btn grn" onclick="submitAdvanceStage()">
+      <i class="ti ti-arrow-right"></i>Advance stage
+    </button>
+  </div>
+</div>
+</div>
+<!-- TEAM MODAL -->
+<div class="overlay" id="modal-team">
+<div class="modal modal-sm" style="width:480px">
+  <h3 id="tm-title">
+    <i class="ti ti-people" style="color:#185FA5"></i>Add team
+  </h3>
+  <div class="frow one">
+    <div class="fg full">
+      <label>Team name <span class="req">*</span></label>
+      <input id="tm-name" type="text" placeholder="e.g. Enterprise Team">
+    </div>
+  </div>
+  <div class="frow one">
+    <div class="fg full">
+      <label>Team leader <span class="req">*</span></label>
+      <input id="tm-leader" type="text" placeholder="e.g. John Smith">
+    </div>
+  </div>
+  <div class="frow one">
+    <div class="fg full">
+      <label>Notes</label>
+      <input id="tm-notes" type="text" placeholder="Optional">
+    </div>
+  </div>
+  <div class="frow one">
+    <div class="fg full">
+      <label>Active</label>
+      <select id="tm-active">
+        <option value="YES">Yes</option>
+        <option value="NO">No</option>
+      </select>
+    </div>
+  </div>
+  <div class="factions">
+    <button class="btn" onclick="closeModal('modal-team')">Cancel</button>
+    <button class="btn pri" onclick="saveTeam()">Save team</button>
+  </div>
+</div>
+</div>
+</body>
+</html>
